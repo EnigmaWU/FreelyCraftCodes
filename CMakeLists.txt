@@ -7,3 +7,6 @@ set(CMAKE_C_COMPILER /usr/bin/clang)
 set(LIB_PEC PlatPEC)
 file(GLOB LIB_PEC_SRCFILES PlatIF_PEC/*.c)
 add_library(${LIB_PEC} STATIC ${LIB_PEC_SRCFILES})
+
+add_subdirectory(PlatIF_PEC_UT_useCmocka)
+add_subdirectory(Tools)
