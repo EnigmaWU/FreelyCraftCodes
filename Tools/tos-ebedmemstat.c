@@ -46,20 +46,33 @@ typedef struct
 typedef struct 
 {
     pid_t PID;
-    char Name[256];
-    unsigned long USS;
-    unsigned long PSS;
-    unsigned long RSS;
-    unsigned long VMZ;
-    unsigned long Heap;
-    unsigned long MMAP;
-    unsigned long Stack;
-    unsigned long SharedObject;
-    unsigned long FileMMAP;
+
+    //read from /proc/[pid]/smaps
+    unsigned long VMZ;//Current process's virtual memory size
+    unsigned long RSS;//Current process's resident set size
+    unsigned long PSS;//Current process's proportional set size
+    unsigned long USS;//Current process's unique set size
     
-    unsigned long SocketBuffer;
-    unsigned long FileBuffer;
+    #if 0
+    unsigned long Heap;//Current process's heap size
+    unsigned long Anonymous;//Current process's anonymous size
+    unsigned long Stack;//Current process's stack size
+
+    unsigned long SharedObject;//Current process's shared object size
+    unsigned long FileMMAP;//Current process's file mmap size
+    
+    unsigned long SocketBuffer;//Current process's socket buffer size
+    unsigned long FileBuffer;//Current process's file buffer size
+    #endif
 } TOS_EMS_USpaceProcess_T, *TOS_EMS_USpaceProcess_pT;
+
+//readUspaceProcess from /proc/[pid]/smaps and /proc/[pid]/maps,
+//  then calculate VMZ/RSS/PSS/USS
+void TOS_EMS_ReadUSpaceProcess(TOS_EMS_USpaceProcess_pT pProcess)
+{
+    
+ 
+}
 
 typedef struct 
 {
@@ -182,34 +195,6 @@ void TOS_EMS_PrintOverview(TOS_EMS_ToolContext_pT pContext)
         pContext->Overview.Buffers,
         pContext->Overview.Cached,
         pContext->Overview.Shmem);
-}
-
-//readUspaceProcess
-void TOS_EMS_ReadUSpaceProcess(TOS_EMS_USpaceProcess_pT pProcess)
-{
-    char path[256];
-    sprintf(path, "/proc/%d/statm", pProcess->PID);
-
-    FILE *fp = fopen(path, "r");
-    if( NULL == fp )
-    {
-        return;
-    }
-
-    char line[256];
-    if( NULL != fgets(line, sizeof(line), fp) )
-    {
-        sscanf(line, "%lu %lu %lu %lu %lu %lu %lu",
-            &pProcess->USS,
-            &pProcess->PSS,
-            &pProcess->RSS,
-            &pProcess->VMZ,
-            &pProcess->Heap,
-            &pProcess->MMAP,
-            &pProcess->Stack);
-    }
-
-    fclose(fp);
 }
 
 int main(int argc, char *argv[])
