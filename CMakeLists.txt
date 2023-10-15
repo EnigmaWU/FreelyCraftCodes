@@ -10,3 +10,9 @@ add_library(${LIB_PEC} STATIC ${LIB_PEC_SRCFILES})
 
 add_subdirectory(PlatIF_PEC_UT_useCmocka)
 add_subdirectory(Tools)
+
+
+### PlatIF_EVT -> libPlatEVT
+set(LIB_EVT PlatEVT)
+file(GLOB LIB_EVT_SRCFILES PlatIF_EVT/*.c)
+add_library(${LIB_EVT} STATIC ${LIB_EVT_SRCFILES})

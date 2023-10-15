@@ -1,0 +1,20 @@
+typedef enum 
+{
+    TOS_EVENT_CLASS_VEHICLE,
+} TOS_EvtClassID_T;
+
+typedef enum 
+{
+    //EvtData.U8[0]==FromState, EvtData.U8[1]==ToState
+    //RefMore: TOS_StateVehicleID_T
+    TOS_EVENT_VEHICLE_STATE_TRANSFER,
+
+    TOS_EVENT_EMERGENCY_STOP,
+    TOS_EVENT_EMERGENCY_STOP_ACK,
+
+    TOS_EVENT_EMERGENCY_STOPPED,
+
+    TOS_EVENT_EMERGENCY_RESOLVED,
+    TOS_EVENT_EMERGENCY_RESOLVED_ACK,
+    
+} TOS_EvtVehicleID_T;

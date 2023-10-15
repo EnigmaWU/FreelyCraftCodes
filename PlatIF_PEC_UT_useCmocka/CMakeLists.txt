@@ -35,7 +35,12 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/NewCmocka)
     add_library(cmocka STATIC IMPORTED)
     set_property(TARGET cmocka PROPERTY IMPORTED_LOCATION ${LIBCMK})
     add_dependencies(cmocka cmocka)
+
+    #如果NewCmocka里的代码改动，需要重新编译，那么需要重新编译当前目录下的UT
+
+
 endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/NewCmocka)
+
 
 function(addNewUT _UT_SRC_FNAME)
     add_executable(${_UT_SRC_FNAME} ${_UT_SRC_FNAME}.c)
