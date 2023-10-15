@@ -12,6 +12,7 @@ typedef uint32_t TOS_EvtID_T;//RefMore: TOS_MAKE_EVTID and TOS_EVTID_*_*_* in Pl
 #include "PlatIF_EventID.h"
 
 typedef uint32_t TOS_EvtFlags_T;
+#include "PlatIF_EventFlags.h"
 
 typedef struct {
     TOS_ModObjID_T FromObjID, ToObjID;
