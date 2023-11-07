@@ -1,7 +1,13 @@
 typedef enum 
 {
     TOS_EVENT_CLASS_VEHICLE,
+    TOS_EVENT_CLASS_SYSTEM,
 } TOS_EvtClassID_T;
+
+typedef enum
+{
+    TOS_EVENT_SYSTEM_TIMER,
+} TOS_EvtSystemID_T;
 
 typedef enum 
 {
