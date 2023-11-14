@@ -1,4 +1,3 @@
-enable_testing()
 
 find_path(INCMK cmocka.h)
 find_library(LIBCMK cmocka)

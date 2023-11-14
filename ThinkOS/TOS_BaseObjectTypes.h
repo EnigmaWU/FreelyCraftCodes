@@ -45,6 +45,7 @@ typedef enum
     TOS_RESULT_NOT_ENOUGH_PORT = -32,
     TOS_RESULT_NOT_ENOUGH_SOCKET = -33,
 
+    TOS_RESULT_BUG = -100,
 } TOS_Result_T;
 
 typedef uint64_t TOS_BaseObjectID_T;

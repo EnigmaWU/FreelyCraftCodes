@@ -7,15 +7,19 @@
 //  IF Module's Functional Object is singleton, ModInstID=0, OTHERWISE ModInstID=1~63
 typedef uint16_t TOS_ModObjID_T;//RefMore: TOS_ModID_T
 
-#define TOS_MODOBJID_EVTSUBERS      (0x0000UL)
-#define TOS_MODOBJID_ALL            (0xFFFFUL)
+enum TOS_ModObjID_Reserved_enum
+{
+    TOS_MODOBJID_EVTSUBERS      = 0x0000UL,
+    TOS_MODOBJID_ALL            = 0xFFFFUL,
 
-//ModObjID::UT=ModID::UT=1023
-#define TOS_MODOBJID_UT_A (0xFFFEUL)
-#define TOS_MODOBJID_UT_B (0xFFFDUL)
-#define TOS_MODOBJID_UT_C (0xFFFCUL)
-#define TOS_MODOBJID_UT_D (0xFFFBUL)
-#define TOS_MODOBJID_UT_E (0xFFFAUL)
+    //ModObjID_UT=ModID_UT(=1023)+ModInstID_UT(=0~63)
+    TOS_MODOBJID_UT_A           = 0xFFFEUL,
+    TOS_MODOBJID_UT_B           = 0xFFFDUL,
+    TOS_MODOBJID_UT_C           = 0xFFFCUL,
+    TOS_MODOBJID_UT_D           = 0xFFFBUL,
+    TOS_MODOBJID_UT_E           = 0xFFFAUL,
+
+};
 
 typedef uint32_t TOS_EvtID_T;//RefMore: TOS_MAKE_EVTID and TOS_EVTID_*_*_* in PlatIF_EventID.h
 
@@ -24,10 +28,11 @@ typedef uint32_t TOS_EvtFlags_T;
 typedef uint32_t TOS_EvtOperID_T;
 
 typedef struct {
-    TOS_ModObjID_T FromModObjID, ToModObjID/*Specific or All-Subers*/;
+    TOS_ModObjID_T FromModObjID;
+    TOS_ModObjID_T ToModObjID;
 
-    TOS_EvtID_T    EvtID;
-    TOS_EvtFlags_T EvtFlags;
+    TOS_EvtID_T    EvtID;//RefMore: TOS_EVTID_*_*_* which made by TOS_MAKE_EVTID in PlatIF_EventID.h
+    TOS_EvtFlags_T EvtFlags;//DEFAULT is '0' and it always is ENOUGH; RefMore: TOS_EVTFLAG_*_*_* in PlatIF_EventFlags.h
     uint32_t       SeqID;//PerEvtPuber: 0~0xFFFFFFFF
 
     union 
@@ -51,5 +56,24 @@ typedef struct
     TOS_EvtSubCallback_ProcEvt_F CbProcEvtHRT_F;
 #endif
 } TOS_EvtSubArgs_T, *TOS_EvtSubArgs_pT;
+
+
+typedef struct
+{
+    TOS_ModObjID_T ModObjID;//PuberObjID or SuberObjID
+    //TODO(@W): +More...
+} TOS_EvtOperArgs_T, *TOS_EvtOperArgs_pT;
+
+typedef struct 
+{
+    //TODO(@W): LogLevel, OpLogWriter_F
+
+    struct 
+    {
+        uint16_t EvtQueueDepth;
+        uint16_t OperatorCount;
+        //TODO(@W): +More...
+    } Params;
+} TOS_EvtModuleArgs_T, *TOS_EvtModuleArgs_pT;
 
 #endif//__PLAT_IF_EVENT_TYPES_H__

@@ -5,5 +5,6 @@
 #include "TOS_BaseCommand.h"
 #include "TOS_BaseOption.h"
 #include "TOS_BaseObject.h"
+#include "TOS_BaseHelpers.h"
 
 #endif
