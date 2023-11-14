@@ -21,7 +21,7 @@ file(GLOB LIB_EVT_SRCFILES PlatIF_EVT/*.c)
 add_library(${LIB_EVT} STATIC ${LIB_EVT_SRCFILES})
 
 if(CONFIG_BUILD_UNIT_TESTING)
-    target_compile_definitions(${LIB_EVT} PUBLIC CONFIG_BUILD_WITH_UNIT_TESTING)
+    target_compile_definitions(${LIB_EVT} PRIVATE CONFIG_BUILD_WITH_UNIT_TESTING)
 
     enable_testing()
     add_subdirectory(PlatIF_EVT_UT_useCmocka)

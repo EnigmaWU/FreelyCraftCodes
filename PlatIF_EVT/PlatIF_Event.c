@@ -2,13 +2,13 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-TOS_Result_T PLT_EVT_registerOperator(/*ARG_OUT*/ TOS_EvtOperID_T* pEvtOperID, /*ARG_IN*/const TOS_EvtOperArgs_pT pEvtOperArgs)
+TOS_Result_T PLT_EVT_regOper(/*ARG_OUT*/ TOS_EvtOperID_T* pEvtOperID, /*ARG_IN*/const TOS_EvtOperArgs_pT pEvtOperArgs)
 {
     return TOS_RESULT_NOT_SUPPORTED;
 }
 
 #ifdef CONFIG_BUILD_WITH_UNIT_TESTING
-void PLT_EVT_unregisterOperator(/*ARG_IN*/ TOS_EvtOperID_T EvtOperID)
+void PLT_EVT_unregOper(/*ARG_IN*/ TOS_EvtOperID_T EvtOperID)
 {
     return;
 }
@@ -54,6 +54,17 @@ TOS_Result_T PLT_EVT_pubEvts
 {
     return TOS_RESULT_NOT_SUPPORTED;
 }
+
+#ifdef CONFIG_BUILD_WITH_UNIT_TESTING
+void PLT_EVT_unsubEvts(/*ARG_IN*/TOS_EvtOperID_T)
+{
+
+}
+void PLT_EVT_unpubEvts(/*ARG_IN*/TOS_EvtOperID_T)
+{
+
+}
+#endif//CONFIG_BUILD_WITH_UNIT_TESTING
 
 TOS_Result_T PLT_EVT_postEvtSRT
     (/*ARG_IN*/TOS_EvtOperID_T EvtPuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc)

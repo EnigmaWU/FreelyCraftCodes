@@ -19,9 +19,9 @@
 
  typedef struct 
  {
-    TOS_EvtOperID_T EvtSuberID;
+    TOS_EvtOperID_T EvtSuberID; 
     unsigned long KeepAliveTotalCnt, KeepAliveNextSeqID;
- } _UT_EvtSuberPrivT01_T, *_UT_EvtSuberPrivT01_pT;
+ } _UT_EvtSuberPrivT01_T, *_UT_EvtSuberPrivT01_pT;      
 
 static TOS_Result_T __UT_ProcEvtSRT_Typical_01
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToObjPriv)
@@ -74,6 +74,9 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_disableModule();
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    PLT_EVT_unpubEvts(EvtPuberID);
+    PLT_EVT_unsubEvts(EvtSuberID);
 }
 
 //TOS_EVTID_TEST_KEEPALIVE: 1xEvtPuber, 1xEvtSuber, 1024xPostEvtSRT
@@ -147,6 +150,10 @@ void UT_T1_PubSubEvt_Typical_02_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
 
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_disableModule();
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    PLT_EVT_unpubEvts(EvtPuberID);
+    PLT_EVT_unsubEvts(EvtSuberID);
 }
 
 //TOS_EVTID_TEST_MSGDATA: 1xEvtPuber, 3xEvtSuber, 1024xPostEvtSRT(with MsgData)
@@ -170,18 +177,18 @@ typedef struct
 static TOS_Result_T __UT_ProcEvtSRT_Typical_03_B
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToObjPriv)
 {
-    _UT_EvtSuberPrivT03_pT pEvtSuberPriv = (_UT_EvtSuberPrivT03_pT)pToObjPriv;
-    assert_int_equal(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+    _UT_EvtSuberPrivT03_pT pEvtSuberPrivB = (_UT_EvtSuberPrivT03_pT)pToObjPriv;
+    assert_int_equal(EvtSuberID, pEvtSuberPrivB->EvtSuberID);//CheckPoint
 
-    assert_int_equal(pEvtDesc->SeqID, pEvtSuberPriv->EchoRequestNextSeqID);//CheckPoint
-    pEvtSuberPriv->EchoRequestNextSeqID++;
+    assert_int_equal(pEvtDesc->SeqID, pEvtSuberPrivB->EchoRequestNextSeqID);//CheckPoint
+    pEvtSuberPrivB->EchoRequestNextSeqID++;
 
     TOS_EvtID_T EvtID = pEvtDesc->EvtID;
     assert_int_equal(EvtID, TOS_EVTID_TEST_ECHO_REQUEST);//CheckPoint
 
     TOS_EvtDesc_T EvtTestEchoResponse = { .EvtID = TOS_EVTID_TEST_ECHO_RESPONSE, .ToModObjID = TOS_MODOBJID_EVTSUBERS, };
     EvtTestEchoResponse.SeqID = pEvtDesc->SeqID;
-    TOS_Result_T Result = PLT_EVT_postEvtSRT(pEvtSuberPriv->EvtPuberB, &EvtTestEchoResponse);
+    TOS_Result_T Result = PLT_EVT_postEvtSRT(pEvtSuberPrivB->EvtPuberB, &EvtTestEchoResponse);
     assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     return TOS_RESULT_SUCCESS;
@@ -190,11 +197,11 @@ static TOS_Result_T __UT_ProcEvtSRT_Typical_03_B
 static TOS_Result_T __UT_ProcEvtSRT_Typical_03_C
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToObjPriv)
 {
-    _UT_EvtSuberPrivT03_pT pEvtSuberPriv = (_UT_EvtSuberPrivT03_pT)pToObjPriv;
-    assert_int_equal(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+    _UT_EvtSuberPrivT03_pT pEvtSuberPrivC = (_UT_EvtSuberPrivT03_pT)pToObjPriv;
+    assert_int_equal(EvtSuberID, pEvtSuberPrivC->EvtSuberID);//CheckPoint
 
-    assert_int_equal(pEvtDesc->SeqID, pEvtSuberPriv->EchoResponseNextSeqID);//CheckPoint
-    pEvtSuberPriv->EchoResponseNextSeqID++;
+    assert_int_equal(pEvtDesc->SeqID, pEvtSuberPrivC->EchoResponseNextSeqID);//CheckPoint
+    pEvtSuberPrivC->EchoResponseNextSeqID++;
 
     TOS_EvtID_T EvtID = pEvtDesc->EvtID;
     assert_int_equal(EvtID, TOS_EVTID_TEST_ECHO_RESPONSE);//CheckPoint
@@ -212,8 +219,12 @@ void UT_T1_PubSubEvt_Typical_03_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     _UT_OperatorContext_pT pPubSubCtx = (_UT_OperatorContext_pT)(*state);
 
     TOS_EvtOperID_T EvtPuberA = pPubSubCtx->EvtOperID_ModObjUT_A[0];
+    #if 1
     TOS_EvtOperID_T EvtSuberB = pPubSubCtx->EvtOperID_ModObjUT_B[0];
     TOS_EvtOperID_T EvtPuberB = pPubSubCtx->EvtOperID_ModObjUT_B[1];
+    #else
+    TOS_EvtOperID_T EvtSuberB = EvtPuberB = pPubSubCtx->EvtOperID_ModObjUT_B[0];
+    #endif
     TOS_EvtOperID_T EvtSuberC = pPubSubCtx->EvtOperID_ModObjUT_C[0];
 
     TOS_EvtID_T EvtIDsEchoRequest[] = {TOS_EVTID_TEST_ECHO_REQUEST};
@@ -225,13 +236,13 @@ void UT_T1_PubSubEvt_Typical_03_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     Result = PLT_EVT_subEvts(EvtSuberB, EvtIDsEchoRequest, TOS_calcArrayElmtCnt(EvtIDsEchoRequest), &EvtSubArgsB);
     assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
-    TOS_EvtID_T EvtIDs_EchoResponse[] = {TOS_EVTID_TEST_ECHO_RESPONSE};
-    Result = PLT_EVT_pubEvts(EvtPuberB, EvtIDs_EchoResponse, TOS_calcArrayElmtCnt(EvtIDs_EchoResponse));
+    TOS_EvtID_T EvtIDsEchoResponse[] = {TOS_EVTID_TEST_ECHO_RESPONSE};
+    Result = PLT_EVT_pubEvts(EvtPuberB, EvtIDsEchoResponse, TOS_calcArrayElmtCnt(EvtIDsEchoResponse));
     assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     _UT_EvtSuberPrivT03_T EvtSuberPrivC = { .EvtSuberID = EvtSuberC, .EchoResponseTotalCnt = 1024, .EchoResponseNextSeqID = 0 };
     TOS_EvtSubArgs_T EvtSubArgsC = { .CbProcEvtSRT_F = __UT_ProcEvtSRT_Typical_03_C, .ToObjPriv = &EvtSuberPrivC };
-    Result = PLT_EVT_subEvts(EvtSuberC, EvtIDs_EchoResponse, TOS_calcArrayElmtCnt(EvtIDs_EchoResponse), &EvtSubArgsC);
+    Result = PLT_EVT_subEvts(EvtSuberC, EvtIDsEchoResponse, TOS_calcArrayElmtCnt(EvtIDsEchoResponse), &EvtSubArgsC);
     assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -253,6 +264,11 @@ void UT_T1_PubSubEvt_Typical_03_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_disableModule();
     
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    PLT_EVT_unpubEvts(EvtPuberA);
+    PLT_EVT_unsubEvts(EvtSuberB);
+    PLT_EVT_unpubEvts(EvtPuberB);
+    PLT_EVT_unsubEvts(EvtSuberC);
 }
 
 //TOS_EVTID_TEST_ECHO_REQUEST/_ECHO_RESPONSE: ...
@@ -270,21 +286,21 @@ int UT_T1_PubSubEvt_Typical_setupUnitContext(void **state)
     for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(_mPubSubCtx.EvtOperID_ModObjUT_A); OperCnt++ )
     {
         EvtPuberArgs.ModObjID = TOS_MODOBJID_UT_A;
-        TOS_Result_T Result = PLT_EVT_registerOperator(&_mPubSubCtx.EvtOperID_ModObjUT_A[OperCnt], &EvtPuberArgs);
+        TOS_Result_T Result = PLT_EVT_regOper(&_mPubSubCtx.EvtOperID_ModObjUT_A[OperCnt], &EvtPuberArgs);
         assert_int_equal(Result, TOS_RESULT_SUCCESS);
     }
 
     for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(_mPubSubCtx.EvtOperID_ModObjUT_B); OperCnt++ )
     {
         EvtPuberArgs.ModObjID = TOS_MODOBJID_UT_B;
-        TOS_Result_T Result = PLT_EVT_registerOperator(&_mPubSubCtx.EvtOperID_ModObjUT_B[OperCnt], &EvtPuberArgs);
+        TOS_Result_T Result = PLT_EVT_regOper(&_mPubSubCtx.EvtOperID_ModObjUT_B[OperCnt], &EvtPuberArgs);
         assert_int_equal(Result, TOS_RESULT_SUCCESS);
     }
 
     for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(_mPubSubCtx.EvtOperID_ModObjUT_C); OperCnt++ )
     {
         EvtPuberArgs.ModObjID = TOS_MODOBJID_UT_C;
-        TOS_Result_T Result = PLT_EVT_registerOperator(&_mPubSubCtx.EvtOperID_ModObjUT_C[OperCnt], &EvtPuberArgs);
+        TOS_Result_T Result = PLT_EVT_regOper(&_mPubSubCtx.EvtOperID_ModObjUT_C[OperCnt], &EvtPuberArgs);
         assert_int_equal(Result, TOS_RESULT_SUCCESS);
     }
     
@@ -298,17 +314,17 @@ int UT_T1_PubSubEvt_Typical_teardownUnitContext(void **state)
 
     for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(pPubSubCtx->EvtOperID_ModObjUT_A); OperCnt++ )
     {
-        PLT_EVT_unregisterOperator(pPubSubCtx->EvtOperID_ModObjUT_A[OperCnt]);
+        PLT_EVT_unregOper(pPubSubCtx->EvtOperID_ModObjUT_A[OperCnt]);
     }
     
     for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(pPubSubCtx->EvtOperID_ModObjUT_B); OperCnt++ )
     {
-        PLT_EVT_unregisterOperator(pPubSubCtx->EvtOperID_ModObjUT_B[OperCnt]);
+        PLT_EVT_unregOper(pPubSubCtx->EvtOperID_ModObjUT_B[OperCnt]);
     }
 
     for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(pPubSubCtx->EvtOperID_ModObjUT_C); OperCnt++ )
     {
-        PLT_EVT_unregisterOperator(pPubSubCtx->EvtOperID_ModObjUT_C[OperCnt]);
+        PLT_EVT_unregOper(pPubSubCtx->EvtOperID_ModObjUT_C[OperCnt]);
     }
 
     return 0;

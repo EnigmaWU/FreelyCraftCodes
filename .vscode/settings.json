@@ -1,4 +1,8 @@
 {
     "cmake.buildArgs": [
+    ],
+
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/CMakeBuilt",
     ]
 }
