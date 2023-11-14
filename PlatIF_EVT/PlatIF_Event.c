@@ -15,26 +15,26 @@ void PLT_EVT_unregOper(/*ARG_IN*/ TOS_EvtOperID_T EvtOperID)
 #endif//CONFIG_BUILD_WITH_UNIT_TESTING
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-TOS_Result_T PLT_EVT_enableModule(void)
+TOS_Result_T PLT_EVT_enableEvtManger(void)
 {
     return TOS_RESULT_NOT_SUPPORTED;
 }
 
 #ifdef CONFIG_BUILD_WITH_UNIT_TESTING
-void PLT_EVT_disableModule(void)
+void PLT_EVT_disableEvtManger(void)
 {
     return;
 }
 #endif//CONFIG_BUILD_WITH_UNIT_TESTING
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-TOS_Result_T PLT_EVT_initModule(/*ARG_IN*/const TOS_EvtModuleArgs_pT pEvtModArgs)
+TOS_Result_T PLT_EVT_initEvtManger(/*ARG_IN*/const TOS_EvtModuleArgs_pT pEvtModArgs)
 {
     return TOS_RESULT_NOT_SUPPORTED;
 }
 
 #ifdef CONFIG_BUILD_WITH_UNIT_TESTING
-void PLT_EVT_deinitModule(void)
+void PLT_EVT_deinitEvtManger(void)
 {
     return;
 }

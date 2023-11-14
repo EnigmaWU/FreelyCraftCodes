@@ -44,39 +44,39 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_OperatorContext_pT pPubSubCtx = (_UT_OperatorContext_pT)(*state);
 
-    TOS_EvtOperID_T EvtPuberID = pPubSubCtx->EvtOperID_ModObjUT_A[0];
+    TOS_EvtOperID_T EvtPuber = pPubSubCtx->EvtOperID_ModObjUT_A[0];
     TOS_EvtID_T PubEvtIDs[] = {TOS_EVTID_TEST_KEEPALIVE};
-    Result = PLT_EVT_pubEvts(EvtPuberID, PubEvtIDs, TOS_calcArrayElmtCnt(PubEvtIDs));
+    Result = PLT_EVT_pubEvts(EvtPuber, PubEvtIDs, TOS_calcArrayElmtCnt(PubEvtIDs));
     assert_int_equal(Result, TOS_RESULT_SUCCESS);
 
 
-    TOS_EvtOperID_T EvtSuberID = pPubSubCtx->EvtOperID_ModObjUT_B[0];
+    TOS_EvtOperID_T EvtSuber = pPubSubCtx->EvtOperID_ModObjUT_B[0];
     TOS_EvtID_T SubEvtIDs[] = {TOS_EVTID_TEST_KEEPALIVE};
-    _UT_EvtSuberPrivT01_T EvtSuberPriv = { .EvtSuberID = EvtSuberID, .KeepAliveTotalCnt = 1024, .KeepAliveNextSeqID = 0 };
+    _UT_EvtSuberPrivT01_T EvtSuberPriv = { .EvtSuberID = EvtSuber, .KeepAliveTotalCnt = 1024, .KeepAliveNextSeqID = 0 };
     TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_ProcEvtSRT_Typical_01, .ToObjPriv = &EvtSuberPriv };
-    Result = PLT_EVT_subEvts(EvtSuberID, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
+    Result = PLT_EVT_subEvts(EvtSuber, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
     assert_int_equal(Result, TOS_RESULT_SUCCESS);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     expect_function_calls(__UT_ProcEvtSRT_Typical_01, EvtSuberPriv.KeepAliveTotalCnt);
 
     //-----------------------------------------------------------------------------------------------------------------
-    PLT_EVT_enableModule();
+    PLT_EVT_enableEvtManger();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for( int EvtCnt=0; EvtCnt<EvtSuberPriv.KeepAliveTotalCnt; EvtCnt++ )
     {
         TOS_EvtDesc_T EvtTestKeepAlive = { .EvtID = TOS_EVTID_TEST_KEEPALIVE, .ToModObjID = TOS_MODOBJID_EVTSUBERS, };
-        Result = PLT_EVT_postEvtSRT(EvtPuberID, &EvtTestKeepAlive);
+        Result = PLT_EVT_postEvtSRT(EvtPuber, &EvtTestKeepAlive);
         assert_int_equal(Result, TOS_RESULT_SUCCESS);
     }
 
     //-----------------------------------------------------------------------------------------------------------------
-    PLT_EVT_disableModule();
+    PLT_EVT_disableEvtManger();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    PLT_EVT_unpubEvts(EvtPuberID);
-    PLT_EVT_unsubEvts(EvtSuberID);
+    PLT_EVT_unpubEvts(EvtPuber);
+    PLT_EVT_unsubEvts(EvtSuber);
 }
 
 //TOS_EVTID_TEST_KEEPALIVE: 1xEvtPuber, 1xEvtSuber, 1024xPostEvtSRT
@@ -116,23 +116,23 @@ void UT_T1_PubSubEvt_Typical_02_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
 {
     _UT_OperatorContext_pT pPubSubCtx = (_UT_OperatorContext_pT)(*state);
 
-    TOS_EvtOperID_T EvtPuberID = pPubSubCtx->EvtOperID_ModObjUT_A[0];
+    TOS_EvtOperID_T EvtPuber = pPubSubCtx->EvtOperID_ModObjUT_A[0];
     TOS_EvtID_T PubEvtIDs[] = {TOS_EVTID_TEST_MSGDATA};
-    TOS_Result_T Result = PLT_EVT_pubEvts(EvtPuberID, PubEvtIDs, TOS_calcArrayElmtCnt(PubEvtIDs));
+    TOS_Result_T Result = PLT_EVT_pubEvts(EvtPuber, PubEvtIDs, TOS_calcArrayElmtCnt(PubEvtIDs));
     assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
-    TOS_EvtOperID_T EvtSuberID = pPubSubCtx->EvtOperID_ModObjUT_B[0];
+    TOS_EvtOperID_T EvtSuber = pPubSubCtx->EvtOperID_ModObjUT_B[0];
     TOS_EvtID_T SubEvtIDs[] = {TOS_EVTID_TEST_MSGDATA};
-    _UT_EvtSuberPrivT02_T EvtSuberPriv = { .EvtSuberID = EvtSuberID, .MsgDataTotalCnt = 1024, .MsgDataNextSeqID = 0 };
+    _UT_EvtSuberPrivT02_T EvtSuberPriv = { .EvtSuberID = EvtSuber, .MsgDataTotalCnt = 1024, .MsgDataNextSeqID = 0 };
     TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_ProcEvtSRT_Typical_02, .ToObjPriv = &EvtSuberPriv };
-    Result = PLT_EVT_subEvts(EvtSuberID, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
+    Result = PLT_EVT_subEvts(EvtSuber, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
     assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     expect_function_calls(__UT_ProcEvtSRT_Typical_02, EvtSuberPriv.MsgDataTotalCnt);
 
     //-----------------------------------------------------------------------------------------------------------------
-    PLT_EVT_enableModule();
+    PLT_EVT_enableEvtManger();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for( uint32_t EvtCnt=0; EvtCnt<EvtSuberPriv.MsgDataTotalCnt; EvtCnt++ )
@@ -144,16 +144,16 @@ void UT_T1_PubSubEvt_Typical_02_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
             EvtTestMsgData.EvtData.U32[Idx] = EvtCnt;
         }
 
-        Result = PLT_EVT_postEvtSRT(EvtPuberID, &EvtTestMsgData);
+        Result = PLT_EVT_postEvtSRT(EvtPuber, &EvtTestMsgData);
         assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
     }
 
     //-----------------------------------------------------------------------------------------------------------------
-    PLT_EVT_disableModule();
+    PLT_EVT_disableEvtManger();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    PLT_EVT_unpubEvts(EvtPuberID);
-    PLT_EVT_unsubEvts(EvtSuberID);
+    PLT_EVT_unpubEvts(EvtPuber);
+    PLT_EVT_unsubEvts(EvtSuber);
 }
 
 //TOS_EVTID_TEST_MSGDATA: 1xEvtPuber, 3xEvtSuber, 1024xPostEvtSRT(with MsgData)
@@ -250,7 +250,7 @@ void UT_T1_PubSubEvt_Typical_03_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     expect_function_calls(__UT_ProcEvtSRT_Typical_03_C, EvtSuberPrivC.EchoResponseTotalCnt);
 
     //-----------------------------------------------------------------------------------------------------------------
-    PLT_EVT_enableModule();
+    PLT_EVT_enableEvtManger();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for( uint32_t EvtCnt=0; EvtCnt<EvtSuberPrivB.EchoRequestTotalCnt; EvtCnt++ )
@@ -259,10 +259,12 @@ void UT_T1_PubSubEvt_Typical_03_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
         EvtTestEchoRequest.SeqID = EvtCnt;
         Result = PLT_EVT_postEvtSRT(EvtPuberA, &EvtTestEchoRequest);
         assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
     }
 
     //-----------------------------------------------------------------------------------------------------------------
-    PLT_EVT_disableModule();
+    PLT_EVT_disableEvtManger();
     
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     PLT_EVT_unpubEvts(EvtPuberA);
@@ -341,7 +343,7 @@ int UTG_T1_PubSubEvt_Typical_setupGroupContext(void **state)
         },
     };
 
-    TOS_Result_T Result = PLT_EVT_initModule(&EvtModArgs);
+    TOS_Result_T Result = PLT_EVT_initEvtManger(&EvtModArgs);
     assert_int_equal(Result, TOS_RESULT_SUCCESS);
 
     return 0;
@@ -349,7 +351,7 @@ int UTG_T1_PubSubEvt_Typical_setupGroupContext(void **state)
 
 int UTG_T1_PubSubEvt_Typical_teardownGroupContext(void **state)
 {
-    PLT_EVT_deinitModule();
+    PLT_EVT_deinitEvtManger();
 
     return 0;
 }
