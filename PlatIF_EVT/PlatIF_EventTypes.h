@@ -42,7 +42,7 @@ typedef struct {
         uint32_t U32[8];
         //void *pMemAddr;
     } EvtData;
-} TOS_EvtDesc_T, *TOS_EvtDesc_pT;
+} TOS_EvtDesc_T, *TOS_EvtDesc_pT;//RefHelper: TOS_EVT_defineEvtDesc, TOS_EVT_[alloc,free]EvtDesc in PlatIF_EventInterfaces.h
 
 typedef TOS_Result_T (*TOS_EvtSubCallback_ProcEvt_F)
     (/*ARG_IN*/TOS_EvtOperID_T, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToObjPriv);
@@ -72,6 +72,7 @@ typedef struct
     {
         uint16_t EvtQueueDepth;
         uint16_t OperatorCount;
+        uint16_t PuberEvtMaxRate;//0=Default=100EPS
         //TODO(@W): +More...
     } Params;
 } TOS_EvtModuleArgs_T, *TOS_EvtModuleArgs_pT;

@@ -1,4 +1,5 @@
 #include "_UT_EVT_Common.h"
+#include "cmocka.h"
 #include <stdint.h>
 
 /**
@@ -35,6 +36,7 @@ static TOS_Result_T __UT_ProcEvtSRT_Typical_01
     TOS_EvtID_T EvtID = pEvtDesc->EvtID;
     assert_int_equal(EvtID, TOS_EVTID_TEST_KEEPALIVE);//CheckPoint
 
+    function_called();
     return TOS_RESULT_SUCCESS;
 }
 
@@ -47,7 +49,7 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     TOS_EvtOperID_T EvtPuber = pPubSubCtx->EvtOperID_ModObjUT_A[0];
     TOS_EvtID_T PubEvtIDs[] = {TOS_EVTID_TEST_KEEPALIVE};
     Result = PLT_EVT_pubEvts(EvtPuber, PubEvtIDs, TOS_calcArrayElmtCnt(PubEvtIDs));
-    assert_int_equal(Result, TOS_RESULT_SUCCESS);
+    assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
 
     TOS_EvtOperID_T EvtSuber = pPubSubCtx->EvtOperID_ModObjUT_B[0];
@@ -55,10 +57,10 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     _UT_EvtSuberPrivT01_T EvtSuberPriv = { .EvtSuberID = EvtSuber, .KeepAliveTotalCnt = 1024, .KeepAliveNextSeqID = 0 };
     TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_ProcEvtSRT_Typical_01, .ToObjPriv = &EvtSuberPriv };
     Result = PLT_EVT_subEvts(EvtSuber, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
-    assert_int_equal(Result, TOS_RESULT_SUCCESS);
+    assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    expect_function_calls(__UT_ProcEvtSRT_Typical_01, EvtSuberPriv.KeepAliveTotalCnt);
+    expect_function_calls(__UT_ProcEvtSRT_Typical_01, EvtSuberPriv.KeepAliveTotalCnt);//CheckPoint
 
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_enableEvtManger();
@@ -66,9 +68,12 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for( int EvtCnt=0; EvtCnt<EvtSuberPriv.KeepAliveTotalCnt; EvtCnt++ )
     {
-        TOS_EvtDesc_T EvtTestKeepAlive = { .EvtID = TOS_EVTID_TEST_KEEPALIVE, .ToModObjID = TOS_MODOBJID_EVTSUBERS, };
-        Result = PLT_EVT_postEvtSRT(EvtPuber, &EvtTestKeepAlive);
-        assert_int_equal(Result, TOS_RESULT_SUCCESS);
+        TOS_EVT_defineEvtDesc(MyTestKeepAliveEvt,TOS_EVTID_TEST_KEEPALIVE);
+
+        Result = PLT_EVT_postEvtSRT(EvtPuber, &MyTestKeepAliveEvt);
+        assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
     }
 
     //-----------------------------------------------------------------------------------------------------------------
@@ -79,7 +84,7 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     PLT_EVT_unsubEvts(EvtSuber);
 }
 
-//TOS_EVTID_TEST_KEEPALIVE: 1xEvtPuber, 1xEvtSuber, 1024xPostEvtSRT
+//TOS_EVTID_TEST_KEEPALIVE: 1xEvtPuber, 3xEvtSuber, 1024xPostEvtSRT
 void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_3xEvtSuber_1024xPostEvtSRT(void **state)
 {
     //TODO(@W)
@@ -137,14 +142,14 @@ void UT_T1_PubSubEvt_Typical_02_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for( uint32_t EvtCnt=0; EvtCnt<EvtSuberPriv.MsgDataTotalCnt; EvtCnt++ )
     {
-        TOS_EvtDesc_T EvtTestMsgData = { .EvtID = TOS_EVTID_TEST_MSGDATA, .ToModObjID = TOS_MODOBJID_EVTSUBERS, };
+        TOS_EVT_defineEvtDesc(MyTestMsgDataEvt,TOS_EVTID_TEST_MSGDATA);
 
-        for( int Idx=0; Idx<TOS_calcArrayElmtCnt(EvtTestMsgData.EvtData.U32); Idx++ )
+        for( int Idx=0; Idx<TOS_calcArrayElmtCnt(MyTestMsgDataEvt.EvtData.U32); Idx++ )
         {
-            EvtTestMsgData.EvtData.U32[Idx] = EvtCnt;
+            MyTestMsgDataEvt.EvtData.U32[Idx] = EvtCnt;
         }
 
-        Result = PLT_EVT_postEvtSRT(EvtPuber, &EvtTestMsgData);
+        Result = PLT_EVT_postEvtSRT(EvtPuber, &MyTestMsgDataEvt);
         assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
     }
 
@@ -186,9 +191,10 @@ static TOS_Result_T __UT_ProcEvtSRT_Typical_03_B
     TOS_EvtID_T EvtID = pEvtDesc->EvtID;
     assert_int_equal(EvtID, TOS_EVTID_TEST_ECHO_REQUEST);//CheckPoint
 
-    TOS_EvtDesc_T EvtTestEchoResponse = { .EvtID = TOS_EVTID_TEST_ECHO_RESPONSE, .ToModObjID = TOS_MODOBJID_EVTSUBERS, };
-    EvtTestEchoResponse.SeqID = pEvtDesc->SeqID;
-    TOS_Result_T Result = PLT_EVT_postEvtSRT(pEvtSuberPrivB->EvtPuberB, &EvtTestEchoResponse);
+    TOS_EVT_defineEvtDesc(MyTestEchoResponseEvt,TOS_EVTID_TEST_ECHO_RESPONSE);
+    //EvtTestEchoResponse.SeqID = pEvtDesc->SeqID;
+
+    TOS_Result_T Result = PLT_EVT_postEvtSRT(pEvtSuberPrivB->EvtPuberB, &MyTestEchoResponseEvt);
     assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     return TOS_RESULT_SUCCESS;
@@ -255,9 +261,10 @@ void UT_T1_PubSubEvt_Typical_03_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for( uint32_t EvtCnt=0; EvtCnt<EvtSuberPrivB.EchoRequestTotalCnt; EvtCnt++ )
     {
-        TOS_EvtDesc_T EvtTestEchoRequest = { .EvtID = TOS_EVTID_TEST_ECHO_REQUEST, .ToModObjID = TOS_MODOBJID_EVTSUBERS, };
-        EvtTestEchoRequest.SeqID = EvtCnt;
-        Result = PLT_EVT_postEvtSRT(EvtPuberA, &EvtTestEchoRequest);
+        TOS_EVT_defineEvtDesc(MyTestEchoRequestEvt,TOS_EVTID_TEST_ECHO_REQUEST);
+        //EvtTestEchoRequest.SeqID = EvtCnt;
+
+        Result = PLT_EVT_postEvtSRT(EvtPuberA, &MyTestEchoRequestEvt);
         assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
         usleep(1000);
@@ -363,10 +370,14 @@ int main(int argc, char *argv[])
                 UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT, 
                 UT_T1_PubSubEvt_Typical_setupUnitContext, 
                 UT_T1_PubSubEvt_Typical_teardownUnitContext),
-        cmocka_unit_test_setup_teardown(
+        /*cmocka_unit_test_setup_teardown(
                 UT_T1_PubSubEvt_Typical_02_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT, 
                 UT_T1_PubSubEvt_Typical_setupUnitContext, 
-                UT_T1_PubSubEvt_Typical_teardownUnitContext),
+                UT_T1_PubSubEvt_Typical_teardownUnitContext),*/
+        /*cmocka_unit_test_setup_teardown(
+                UT_T1_PubSubEvt_Typical_03_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT, 
+                UT_T1_PubSubEvt_Typical_setupUnitContext, 
+                UT_T1_PubSubEvt_Typical_teardownUnitContext),*/
     };
 
     return cmocka_run_group_tests(

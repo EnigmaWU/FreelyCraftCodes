@@ -1,10 +1,27 @@
 #include "PlatIF_Event.h"
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+typedef enum 
+{
+    _EVTMGR_STATE_UNINITED = 0,
+    _EVTMGR_STATE_READY,
+    _EVTMGR_STATE_RUNNING,
+
+} _EvtMangerState_T;
+static _EvtMangerState_T _mEvtMangerState = _EVTMGR_STATE_UNINITED;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 TOS_Result_T PLT_EVT_regOper(/*ARG_OUT*/ TOS_EvtOperID_T* pEvtOperID, /*ARG_IN*/const TOS_EvtOperArgs_pT pEvtOperArgs)
 {
-    return TOS_RESULT_NOT_SUPPORTED;
+    if(_mEvtMangerState == _EVTMGR_STATE_READY)
+    {
+        //TODO(@W): doRegOper
+        return TOS_RESULT_SUCCESS;
+    }
+    else
+    {
+        return TOS_RESULT_NOT_SUPPORTED;
+    }
 }
 
 #ifdef CONFIG_BUILD_WITH_UNIT_TESTING
@@ -30,7 +47,15 @@ void PLT_EVT_disableEvtManger(void)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 TOS_Result_T PLT_EVT_initEvtManger(/*ARG_IN*/const TOS_EvtModuleArgs_pT pEvtModArgs)
 {
-    return TOS_RESULT_NOT_SUPPORTED;
+    if( _mEvtMangerState == _EVTMGR_STATE_UNINITED )
+    {
+        _mEvtMangerState = _EVTMGR_STATE_READY;
+        return TOS_RESULT_SUCCESS;
+    }
+    else
+    {
+        return TOS_RESULT_BUG;
+    }
 }
 
 #ifdef CONFIG_BUILD_WITH_UNIT_TESTING

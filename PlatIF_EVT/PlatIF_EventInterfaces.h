@@ -2,10 +2,10 @@
 #include "PlatIF_EventTypes.h"
 
 TOS_Result_T PLT_EVT_subEvts
-    (/*ARG_IN*/TOS_EvtOperID_T, /*ARG_IN*/TOS_EvtID_T EvtIDs[], /*ARG_IN*/uint32_t NumIDs, /*ARG_IN*/const TOS_EvtSubArgs_pT);
+    (/*ARG_IN*/TOS_EvtOperID_T EvtSuber, /*ARG_IN*/TOS_EvtID_T EvtIDs[], /*ARG_IN*/uint32_t NumIDs, /*ARG_IN*/const TOS_EvtSubArgs_pT pEvtSubArgs);
 
 TOS_Result_T PLT_EVT_pubEvts
-    (/*ARG_IN*/TOS_EvtOperID_T, /*ARG_IN*/TOS_EvtID_T EvtIDs[], /*ARG_IN*/uint32_t NumIDs);
+    (/*ARG_IN*/TOS_EvtOperID_T EvtPuber, /*ARG_IN*/TOS_EvtID_T EvtIDs[], /*ARG_IN*/uint32_t NumIDs);
 
 void PLT_EVT_unsubEvts(/*ARG_IN*/TOS_EvtOperID_T);
 void PLT_EVT_unpubEvts(/*ARG_IN*/TOS_EvtOperID_T);
@@ -44,3 +44,14 @@ void PLT_EVT_deinitEvtManger(void);
 
 TOS_Result_T PLT_EVT_enableEvtManger(void);
 void PLT_EVT_disableEvtManger(void);
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Helpers:
+#define TOS_EVT_defineEvtDesc(_EvtDescName, _EvtID) \
+    TOS_EvtDesc_T _EvtDescName = { \
+        .ToModObjID   = TOS_MODOBJID_EVTSUBERS, \
+        .EvtID        = _EvtID, \
+    }
+
+//TOS_EVT_[alloc,free]EvtDesc

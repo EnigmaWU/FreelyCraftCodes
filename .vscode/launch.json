@@ -8,9 +8,10 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug",
-            "program": "${workspaceFolder}/${CMakeBuildType}/${CMakeBuildTarget}",
+            "program": "${command:cmake.launchTargetPath}",
+            //"program": "${command:cmake.debugTarget}",
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${command:cmake.getLaunchTargetDirectory}"
         }
     ]
 }
