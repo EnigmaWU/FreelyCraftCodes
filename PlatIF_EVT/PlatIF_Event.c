@@ -1,5 +1,6 @@
 #include "PlatIF_Event.h"
 #include <sys/_types/_null.h>
+#include <stdint.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef enum 
@@ -80,9 +81,103 @@ TOS_Result_T PLT_EVT_regOper(/*ARG_OUT*/ TOS_EvtOperID_T* pEvtOperID, /*ARG_IN*/
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#include "pthread.h"
+typedef struct 
+{
+    pthread_t TID;
+    pthread_mutex_t Mutex;
+    pthread_cond_t  Cond;
+
+    uint16_t CurEvtNum;//Current queued EvtDesc number in EvtQueue, a.k.a how many events to processing.
+    uint16_t CurEvtHead;//Current queued EvtDesc head index in EvtQueue, a.k.a EvtProcer's next to be processed EvtDesc.
+    uint16_t CurEvtTail;//Current queued EvtDesc tail index in EvtQueue, a.k.a EvtPuber's next postEvt's EvtDesc saved index.
+
+    int32_t EvtDescQueueNum;//Number of EvtDesc in EvtQueue, a.k.a EvtQueue's length or depth
+    TOS_EvtDesc_T EvtDescQueue[0];
+} _TOS_EvtQueue_T, *_TOS_EvtQueue_pT;
+
+static uint16_t _mMayEvtQueueNumMax = 1;//FIX==1 for now, how many EvtQueueProcer may create&run
+static _TOS_EvtQueue_pT* _mEvtQueueProcer = NULL;//Each EvtQueueProcer is a thread known as EvtProcer
+
+static uint16_t _mMayEvtDescQueueNumMax = 32;//Each EvtQueue's EvtDescQueue's length or depth
+
+static void ___PLT_EVT_EvtProcer_procEvt(TOS_EvtDesc_pT pEvtDesc)
+{
+    //TODO(@W): Call EvtSuber's CbPostEvtSRT_F who subed this EvtID
+    return;
+}
+
+static void* __PLT_EVT_EvtProcer_Thread(void* pArg)
+{
+    _TOS_EvtQueue_pT pEvtQueue = (_TOS_EvtQueue_pT)pArg;
+    if( pEvtQueue == NULL ){ return NULL;}
+
+    do 
+    {
+        pthread_mutex_lock(&pEvtQueue->Mutex);
+        while( pEvtQueue->CurEvtNum == 0 )
+        {
+            pthread_cond_wait(&pEvtQueue->Cond, &pEvtQueue->Mutex);
+        }
+
+        TOS_EvtDesc_pT pEvtDesc = &pEvtQueue->EvtDescQueue[pEvtQueue->CurEvtHead];
+        pEvtQueue->CurEvtHead = (pEvtQueue->CurEvtHead + 1) % pEvtQueue->EvtDescQueueNum;
+        pEvtQueue->CurEvtNum--;
+
+        pthread_mutex_unlock(&pEvtQueue->Mutex);
+
+        ___PLT_EVT_EvtProcer_procEvt(pEvtDesc);
+    }while ( 0x20231126 );
+}
+
+TOS_Result_T __PLT_EVT_doEnableEvtManger_ofStartupEvtProcer(void)
+{
+    if( _mEvtQueueProcer == NULL ){ return TOS_RESULT_BUG;}
+
+    for(uint16_t idx = 0; idx < _mMayEvtQueueNumMax; idx++)
+    {
+        if( _mEvtQueueProcer[idx] == NULL )
+        {
+            _TOS_EvtQueue_pT pEvtQueue 
+                = (_TOS_EvtQueue_pT)calloc
+                    (sizeof(_TOS_EvtQueue_T) + sizeof(TOS_EvtDesc_T) * _mMayEvtDescQueueNumMax, 1);
+            if( pEvtQueue == NULL )
+            {
+                return TOS_RESULT_NOT_ENOUGH_MEMORY;
+            }
+            else 
+            {
+                _mEvtQueueProcer[idx] = pEvtQueue;
+            }
+
+            pEvtQueue->EvtDescQueueNum = _mMayEvtDescQueueNumMax;
+            pthread_mutex_init(&pEvtQueue->Mutex, NULL);
+            pthread_cond_init(&pEvtQueue->Cond, NULL);
+            pthread_create(&pEvtQueue->TID, NULL, __PLT_EVT_EvtProcer_Thread, (void*)pEvtQueue);
+
+            return TOS_RESULT_SUCCESS;
+        }
+    }
+
+    return TOS_RESULT_TOO_MANY_REGED;
+}
+
+//Step-1: Check EvtManger is StateReady
+//Step-2: Startup EvtProcer Thread<s>
 TOS_Result_T PLT_EVT_enableEvtManger(void)
 {
-    return TOS_RESULT_NOT_SUPPORTED;
+    if(_mEvtMangerState != _EVTMGR_STATE_READY)
+    {
+        return TOS_RESULT_BAD_STATE;
+    }
+    
+    TOS_Result_T Result = __PLT_EVT_doEnableEvtManger_ofStartupEvtProcer();
+    if( TOS_RESULT_SUCCESS == Result )
+    {
+        _mEvtMangerState = _EVTMGR_STATE_RUNNING;
+    }
+
+    return Result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,6 +193,7 @@ typedef struct
 
 static uint32_t _mMayPubEvtNumMax = 16;
 static _TOS_EvtPSDB_Row_pT* _mEvtPSDB_PubTable = NULL;
+
 
 static TOS_Result_T __PLT_EVT_doPubEvts
     (TOS_EvtOperID_T EvtPuberID, TOS_EvtID_T EvtIDs[], uint32_t NumIDs)
@@ -266,6 +362,20 @@ TOS_Result_T PLT_EVT_initEvtManger(/*ARG_IN*/const TOS_EvtModuleArgs_pT pEvtModA
             }
 
             //---------------------------------------------------------------------------------------------------------
+            // Init _mMayEvtQueueNumMax
+            //if( pEvtModArgs->Params.MayEvtQueueNumMax > 0 )
+            //{
+            //    _mMayEvtQueueNumMax = pEvtModArgs->Params.MayEvtQueueNumMax;
+            //}
+
+            _mEvtQueueProcer = (_TOS_EvtQueue_pT*)calloc(sizeof(_TOS_EvtQueue_pT), _mMayEvtQueueNumMax);
+            if( _mEvtQueueProcer == NULL )
+            {
+                Result = TOS_RESULT_NOT_ENOUGH_MEMORY;
+                goto _RetErrResult;
+            }
+
+            //---------------------------------------------------------------------------------------------------------
             //TODO(@W): pEvtModArgs->Params.xyz
         }
 
@@ -294,6 +404,12 @@ _RetErrResult:
     {
         free(_mEvtPSDB_SubTable);
         _mEvtPSDB_SubTable = NULL;
+    }
+
+    if(_mEvtQueueProcer)
+    {
+        free(_mEvtQueueProcer);
+        _mEvtQueueProcer = NULL;
     }
     return Result;
 }

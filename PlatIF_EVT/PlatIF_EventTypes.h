@@ -75,6 +75,7 @@ typedef struct
         uint16_t MayRegOperNumMax;//How many MAX Operators may registed as EvtSuber or EvtPuber.
         uint16_t MayPubEvtNumMax;//How many MAX pubEvt() calls may be called by EvtPuber.
         uint16_t MaySubEvtNumMax;//How many MAX subEvt() calls may be called by EvtSuber.
+        uint16_t MayEvtQueueNumMax;//How many MAX EvtQueue to create&run, FIX==1 now.
 
         //TODO(@W): uint16_t EvtQueueDepth;
         //TODO(@W): uint16_t PuberEvtMaxRate;//0=Default=100EPS

@@ -63,7 +63,8 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     expect_function_calls(__UT_ProcEvtSRT_Typical_01, EvtSuberPriv.KeepAliveTotalCnt);//CheckPoint
 
     //-----------------------------------------------------------------------------------------------------------------
-    PLT_EVT_enableEvtManger();
+    Result = PLT_EVT_enableEvtManger();
+    assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for( int EvtCnt=0; EvtCnt<EvtSuberPriv.KeepAliveTotalCnt; EvtCnt++ )
