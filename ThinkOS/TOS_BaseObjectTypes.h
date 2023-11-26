@@ -11,6 +11,12 @@ typedef enum
     TOS_RESULT_ALREADY = 1,
     TOS_RESULT_FAILURE = -1,
 
+    //IF TOS_Result_T as boolean result, use TOS_YES or TOS_NO
+    TOS_RESULT_YES      = 1,
+    TOS_RESULT_NO       = 0,
+    TOS_YES             = TOS_RESULT_YES,
+    TOS_NO              = TOS_RESULT_NO,
+
     TOS_RESULT_ERROR = -1,
     TOS_RESULT_NOT_IMPLEMENTED = -2,
     TOS_RESULT_INVALID = -3,
@@ -44,6 +50,12 @@ typedef enum
     TOS_RESULT_NOT_ENOUGH_PROTOCOL = -31,
     TOS_RESULT_NOT_ENOUGH_PORT = -32,
     TOS_RESULT_NOT_ENOUGH_SOCKET = -33,
+
+    TOS_RESULT_NOT_REGED = -34,
+    TOS_RESULT_TOO_MANY_REGED = -35,
+    TOS_RESULT_BAD_STATE = -36,
+    TOS_RESULT_TOO_MANY_PUBED_EVENTS = -37,
+    TOS_RESULT_TOO_MANY_SUBED_EVENTS = -38,
 
     TOS_RESULT_BUG = -100,
 } TOS_Result_T;

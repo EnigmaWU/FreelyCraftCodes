@@ -64,15 +64,20 @@ typedef struct
     //TODO(@W): +More...
 } TOS_EvtOperArgs_T, *TOS_EvtOperArgs_pT;
 
+#define TOS_EVTPARAM_DEFAULT 0
+
 typedef struct 
 {
     //TODO(@W): LogLevel, OpLogWriter_F
 
     struct 
     {
-        uint16_t EvtQueueDepth;
-        uint16_t OperatorCount;
-        uint16_t PuberEvtMaxRate;//0=Default=100EPS
+        uint16_t MayRegOperNumMax;//How many MAX Operators may registed as EvtSuber or EvtPuber.
+        uint16_t MayPubEvtNumMax;//How many MAX pubEvt() calls may be called by EvtPuber.
+        uint16_t MaySubEvtNumMax;//How many MAX subEvt() calls may be called by EvtSuber.
+
+        //TODO(@W): uint16_t EvtQueueDepth;
+        //TODO(@W): uint16_t PuberEvtMaxRate;//0=Default=100EPS
         //TODO(@W): +More...
     } Params;
 } TOS_EvtModuleArgs_T, *TOS_EvtModuleArgs_pT;

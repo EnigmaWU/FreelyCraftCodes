@@ -345,8 +345,8 @@ int UTG_T1_PubSubEvt_Typical_setupGroupContext(void **state)
     { 
         .Params = 
         { 
-            .EvtQueueDepth = 16, 
-            .OperatorCount = _UT_OPERATOR_COUNT,
+            .MayRegOperNumMax = _UT_OPERATOR_COUNT,
+            .MayPubEvtNumMax  = TOS_EVTPARAM_DEFAULT,
         },
     };
 

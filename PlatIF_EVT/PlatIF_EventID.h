@@ -1,5 +1,15 @@
-#define TOS_MAKE_EVTID(EvtMetaClassID, EvtMetaClassmateID) \
-    (((uint32_t)(EvtMetaClassID)&0xFF) | (((uint32_t)(EvtMetaClassmateID)&0x00FFFFFF)<<8))
+#define TOS_EVENT_CLASS_MASK        (0x000000FFUL)
+#define TOS_EVENT_ALL_IN_CLASS      (0x00FFFFFFUL)
+
+//USE this to define individual event ID used by TOS_EVT_[sub,pub]Evts() and TOS_EVT_postEvtSRT()
+#define TOS_MAKE_EVTID(EvtMetaClassID, EvtMetaClassmateID)                  \
+    ((uint32_t)((EvtMetaClassID)&TOS_EVENT_CLASS_MASK)                      \
+        | (((uint32_t)(EvtMetaClassmateID)&TOS_EVENT_ALL_IN_CLASS)<<8))
+
+//USE this to define event ID group used by TOS_EVT_subEvts() and TOS_EVT_[sub,pub]Evts()
+#define TOS_MAKE_EVTID_GROUP(EvtMetaClassID, EvtMetaClassmateIDs)           \
+    (((uint32_t)(EvtMetaClassID)&TOS_EVENT_CLASS_MASK)                      \
+        | (((uint32_t)(EvtMetaClassmateIDs)&TOS_EVENT_ALL_IN_CLASS)<<8))
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //EVTID_TEST = CLASS_TEST + EVENT_TEST_*
