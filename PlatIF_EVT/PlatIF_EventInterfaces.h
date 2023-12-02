@@ -72,7 +72,7 @@ TOS_Result_T PLT_EVT_pubEvts
 /**
  * @brief EvtPuber call this method to post an event to EvtManger in 'Soft-Real-Time' manner.
  *  IF EvtManger's in StateReady, new posted EvtDesc will be put into EvtQueue only.
- *  WHEN EvtManger's in StateRunning, old in EvtQueue EvtDesc will be processed first,
+ *  WHEN EvtManger's in StateRunning, ‘old EvtDesc’ in EvtQueue will be processed first,
  *      and new posted EvtDesc will be put into EvtQueue while be processed immediately.
  * 
  * @param EvtOper: who post this event to EvtManger, it is a EvtOperID regist with PLT_EVT_regPuber().
@@ -89,7 +89,7 @@ TOS_Result_T PLT_EVT_pubEvts
  *    - TOS_RESULT_NO_SUBSCRIBER: no subscriber for this event, means no EvtSuber is subscribe with PLT_EVT_subEvts().
  */
 TOS_Result_T PLT_EVT_postEvtSRT
-    (/*ARG_IN*/TOS_EvtOperID_T EvtOper, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc);
+    (/*ARG_IN*/TOS_EvtOperID_T EvtOper, /*ARG_IN*/TOS_EvtDesc_pT pEvtDesc);
 
 #ifdef CONFIG_BUILD_FEATURE_HARD_REAL_TIME
 TOS_Result_T PLT_EVT_postEvtHRT

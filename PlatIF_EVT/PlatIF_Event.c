@@ -299,10 +299,37 @@ TOS_Result_T PLT_EVT_subEvts
     return __PLT_EVT_doSubEvts(EvtSuberID, EvtIDs, NumIDs);
 }
 
-TOS_Result_T PLT_EVT_postEvtSRT
-    (/*ARG_IN*/TOS_EvtOperID_T EvtPuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc)
+TOS_Result_T __PLT_EVT_doPostEvtSRT
+    (/*ARG_IN*/TOS_EvtOperID_T EvtPuberID, /*ARG_IN*/TOS_EvtDesc_pT pEvtDesc)
 {
-    return TOS_RESULT_NOT_SUPPORTED;
+    _TOS_EvtQueue_pT pEvtQueue = _mEvtQueueProcer[0];//FIX==0 for now, only one EvtQueueProcer
+
+    pthread_mutex_lock(&pEvtQueue->Mutex);
+    if( pEvtQueue->CurEvtNum == pEvtQueue->EvtDescQueueNum )
+    {
+        pthread_mutex_unlock(&pEvtQueue->Mutex);
+        return TOS_RESULT_TOO_MANY_PUBED_EVENTS;
+    }
+
+    pEvtQueue->EvtDescQueue[pEvtQueue->CurEvtTail] = *pEvtDesc;
+    pEvtQueue->CurEvtTail = (pEvtQueue->CurEvtTail + 1) % pEvtQueue->EvtDescQueueNum;
+    pEvtQueue->CurEvtNum++;
+    pthread_mutex_unlock(&pEvtQueue->Mutex);
+
+    pthread_cond_signal(&pEvtQueue->Cond);
+
+    return TOS_RESULT_SUCCESS;
+}
+
+TOS_Result_T PLT_EVT_postEvtSRT
+    (/*ARG_IN*/TOS_EvtOperID_T EvtPuberID, /*ARG_IN*/TOS_EvtDesc_pT pEvtDesc)
+{
+    if( TOS_YES != __PLT_EVT_isRegedOperID(EvtPuberID) )
+    {
+        return TOS_RESULT_NOT_REGED;
+    }
+
+    return __PLT_EVT_doPostEvtSRT(EvtPuberID, pEvtDesc);
 }
 
 #ifdef CONFIG_BUILD_FEATURE_HARD_REAL_TIME

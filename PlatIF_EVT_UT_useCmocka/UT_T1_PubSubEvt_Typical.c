@@ -1,6 +1,8 @@
 #include "_UT_EVT_Common.h"
 #include "cmocka.h"
+#include <sys/semaphore.h>
 #include <stdint.h>
+#include <semaphore.h>
 
 /**
  * @brief Typical PubSubEvt Case Lists
@@ -22,6 +24,8 @@
  {
     TOS_EvtOperID_T EvtSuberID; 
     unsigned long KeepAliveTotalCnt, KeepAliveNextSeqID;
+
+    sem_t *pSemAllProced;
  } _UT_EvtSuberPrivT01_T, *_UT_EvtSuberPrivT01_pT;      
 
 static TOS_Result_T __UT_ProcEvtSRT_Typical_01
@@ -37,6 +41,11 @@ static TOS_Result_T __UT_ProcEvtSRT_Typical_01
     assert_int_equal(EvtID, TOS_EVTID_TEST_KEEPALIVE);//CheckPoint
 
     function_called();
+
+    if( pEvtSuberPriv->KeepAliveNextSeqID == pEvtSuberPriv->KeepAliveTotalCnt )
+    {
+        sem_post(pEvtSuberPriv->pSemAllProced);
+    }
     return TOS_RESULT_SUCCESS;
 }
 
@@ -55,6 +64,9 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     TOS_EvtOperID_T EvtSuber = pPubSubCtx->EvtOperID_ModObjUT_B[0];
     TOS_EvtID_T SubEvtIDs[] = {TOS_EVTID_TEST_KEEPALIVE};
     _UT_EvtSuberPrivT01_T EvtSuberPriv = { .EvtSuberID = EvtSuber, .KeepAliveTotalCnt = 1024, .KeepAliveNextSeqID = 0 };
+    EvtSuberPriv.pSemAllProced = sem_open("/semaphore", O_CREAT, 0644, 0);
+    assert_ptr_not_equal(NULL, EvtSuberPriv.pSemAllProced);
+    
     TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_ProcEvtSRT_Typical_01, .ToObjPriv = &EvtSuberPriv };
     Result = PLT_EVT_subEvts(EvtSuber, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
     assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
@@ -74,8 +86,11 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
         Result = PLT_EVT_postEvtSRT(EvtPuber, &MyTestKeepAliveEvt);
         assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
-        usleep(1000);
+        usleep(10000);
     }
+
+    //Wait for all EvtSuberPriv.KeepAliveTotalCnt of MyTestKeepAliveEvt to be processed
+    sem_wait(EvtSuberPriv.pSemAllProced);
 
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_disableEvtManger();
