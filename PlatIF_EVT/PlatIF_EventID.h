@@ -11,6 +11,9 @@
     (((uint32_t)(EvtMetaClassID)&TOS_EVENT_CLASS_MASK)                      \
         | (((uint32_t)(EvtMetaClassmateIDs)&TOS_EVENT_ALL_IN_CLASS)<<8))
 
+#define TOS_GET_EVTID_CLASS(EvtID)      ((EvtID)&TOS_EVENT_CLASS_MASK)
+#define TOS_GET_EVTID_CLASSMATE(EvtID)  (((EvtID)>>8)&TOS_EVENT_ALL_IN_CLASS)
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //EVTID_TEST = CLASS_TEST + EVENT_TEST_*
 #define TOS_EVTID_TEST_KEEPALIVE \

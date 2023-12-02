@@ -43,5 +43,10 @@ if(CONFIG_BUILD_UNIT_TESTING)
     target_compile_definitions(${LIB_EVT} PRIVATE CONFIG_BUILD_WITH_UNIT_TESTING)
 
     enable_testing()
-    add_subdirectory(PlatIF_EVT_UT_useCmocka)
+    
+    if(APPLE)
+        add_subdirectory(PlatIF_EVT_UT_useCriterion)#MacOS use criterion
+    else()
+        add_subdirectory(PlatIF_EVT_UT_useCmocka)#Linux use cmocka
+    endif()
 endif()

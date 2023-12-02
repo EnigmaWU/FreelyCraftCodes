@@ -40,7 +40,7 @@ static TOS_Result_T __UT_ProcEvtSRT_Typical_01
     TOS_EvtID_T EvtID = pEvtDesc->EvtID;
     assert_int_equal(EvtID, TOS_EVTID_TEST_KEEPALIVE);//CheckPoint
 
-    function_called();
+    //function_called();
 
     if( pEvtSuberPriv->KeepAliveNextSeqID == pEvtSuberPriv->KeepAliveTotalCnt )
     {
@@ -72,7 +72,7 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
     assert_int_equal(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    expect_function_calls(__UT_ProcEvtSRT_Typical_01, EvtSuberPriv.KeepAliveTotalCnt);//CheckPoint
+    //expect_function_calls(__UT_ProcEvtSRT_Typical_01, EvtSuberPriv.KeepAliveTotalCnt);//CheckPoint
 
     //-----------------------------------------------------------------------------------------------------------------
     Result = PLT_EVT_enableEvtManger();
@@ -91,6 +91,7 @@ void UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT(void **sta
 
     //Wait for all EvtSuberPriv.KeepAliveTotalCnt of MyTestKeepAliveEvt to be processed
     sem_wait(EvtSuberPriv.pSemAllProced);
+    assert_int_equal(EvtSuberPriv.KeepAliveNextSeqID, EvtSuberPriv.KeepAliveTotalCnt);
 
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_disableEvtManger();
@@ -302,7 +303,7 @@ void UT_T1_PubSubEvt_Typical_03_1xEvtPuber_3xEvtSuber_1024xPostEvtSRT(void **sta
     //TODO(@W)
 }
 
-int UT_T1_PubSubEvt_Typical_setupUnitContext(void **state)
+int UT_T1_PubSubEvt_Typical_CASE_setupUnitContext(void **state)
 {
     static _UT_OperatorContext_T _mPubSubCtx = { };
 
@@ -333,7 +334,7 @@ int UT_T1_PubSubEvt_Typical_setupUnitContext(void **state)
     return 0;
 }
 
-int UT_T1_PubSubEvt_Typical_teardownUnitContext(void **state)
+int _UT_PubSubEvt_Typical_CASE_teardownUnitContext(void **state)
 {
     _UT_OperatorContext_pT pPubSubCtx = (_UT_OperatorContext_pT)(*state);
 
@@ -384,8 +385,8 @@ int main(int argc, char *argv[])
     struct CMUnitTest UTG_T1_PubSubEvt_Typical[] = {
         cmocka_unit_test_setup_teardown(
                 UT_T1_PubSubEvt_Typical_01_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT, 
-                UT_T1_PubSubEvt_Typical_setupUnitContext, 
-                UT_T1_PubSubEvt_Typical_teardownUnitContext),
+                UT_T1_PubSubEvt_Typical_CASE_setupUnitContext, 
+                _UT_PubSubEvt_Typical_CASE_teardownUnitContext),
         /*cmocka_unit_test_setup_teardown(
                 UT_T1_PubSubEvt_Typical_02_1xEvtPuber_1xEvtSuber_1024xPostEvtSRT, 
                 UT_T1_PubSubEvt_Typical_setupUnitContext, 

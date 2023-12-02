@@ -88,6 +88,8 @@ typedef struct
     pthread_mutex_t Mutex;
     pthread_cond_t  Cond;
 
+    uint32_t SeqID;
+
     uint16_t CurEvtNum;//Current queued EvtDesc number in EvtQueue, a.k.a how many events to processing.
     uint16_t CurEvtHead;//Current queued EvtDesc head index in EvtQueue, a.k.a EvtProcer's next to be processed EvtDesc.
     uint16_t CurEvtTail;//Current queued EvtDesc tail index in EvtQueue, a.k.a EvtPuber's next postEvt's EvtDesc saved index.
@@ -101,11 +103,7 @@ static _TOS_EvtQueue_pT* _mEvtQueueProcer = NULL;//Each EvtQueueProcer is a thre
 
 static uint16_t _mMayEvtDescQueueNumMax = 32;//Each EvtQueue's EvtDescQueue's length or depth
 
-static void ___PLT_EVT_EvtProcer_procEvt(TOS_EvtDesc_pT pEvtDesc)
-{
-    //TODO(@W): Call EvtSuber's CbPostEvtSRT_F who subed this EvtID
-    return;
-}
+static void ___PLT_EVT_EvtProcer_callEachSuberCbProcEvt(TOS_EvtDesc_pT pEvtDesc);
 
 static void* __PLT_EVT_EvtProcer_Thread(void* pArg)
 {
@@ -126,7 +124,7 @@ static void* __PLT_EVT_EvtProcer_Thread(void* pArg)
 
         pthread_mutex_unlock(&pEvtQueue->Mutex);
 
-        ___PLT_EVT_EvtProcer_procEvt(pEvtDesc);
+        ___PLT_EVT_EvtProcer_callEachSuberCbProcEvt(pEvtDesc);
     }while ( 0x20231126 );
 }
 
@@ -185,7 +183,19 @@ TOS_Result_T PLT_EVT_enableEvtManger(void)
 
 typedef struct 
 {
-    TOS_EvtOperID_T EvtPuberID;
+    union 
+    {
+        struct 
+        {
+            TOS_EvtOperID_T EvtPuberID;
+        };
+
+        struct
+        {
+            TOS_EvtOperID_T   EvtSuberID;
+            TOS_EvtSubArgs_pT pEvtSubArgs;
+        };
+    };
 
     uint32_t NumIDs;
     TOS_EvtID_T EvtIDs[0];
@@ -200,7 +210,7 @@ static TOS_Result_T __PLT_EVT_doPubEvts
 {
     if( _mEvtPSDB_PubTable == NULL ){ return TOS_RESULT_BUG;}
 
-    for(uint32_t row = 0; row < _mMayPubEvtNumMax; row++)
+    for(uint32_t row = 0; row <= _mMayPubEvtNumMax; row++)
     {
         if( _mEvtPSDB_PubTable[row] == NULL )
         {
@@ -248,8 +258,28 @@ TOS_Result_T PLT_EVT_pubEvts
 static uint32_t _mMaySubEvtNumMax = 16;
 static _TOS_EvtPSDB_Row_pT* _mEvtPSDB_SubTable = NULL;
 
+static void ___PLT_EVT_EvtProcer_callEachSuberCbProcEvt(TOS_EvtDesc_pT pEvtDesc)
+{
+    if( _mEvtPSDB_SubTable == NULL ){ return;}
+
+    for(uint32_t row = 0; row < _mMaySubEvtNumMax; row++)//Which EvtSuber in PSDB from PLT_EVT_subEvt()
+    {
+        if( _mEvtPSDB_SubTable[row] == NULL ){ continue;}
+
+        _TOS_EvtPSDB_Row_pT pEvtSuber = _mEvtPSDB_SubTable[row];
+        for(uint32_t num = 0; num <= pEvtSuber->NumIDs; num++)//Which EvtID of current EvtSuber
+        {
+            if( (TOS_GET_EVTID_CLASS(pEvtSuber->EvtIDs[num]) == TOS_GET_EVTID_CLASS(pEvtDesc->EvtID))
+                && (TOS_GET_EVTID_CLASSMATE(pEvtSuber->EvtIDs[num]) & TOS_GET_EVTID_CLASSMATE(pEvtDesc->EvtID)) )
+            {
+                pEvtSuber->pEvtSubArgs->CbProcEvtSRT_F(pEvtSuber->EvtSuberID, pEvtDesc, pEvtSuber->pEvtSubArgs->ToObjPriv);
+            }
+        }
+    }
+}
+
 TOS_Result_T __PLT_EVT_doSubEvts
-    (TOS_EvtOperID_T EvtSuberID, TOS_EvtID_T EvtIDs[], uint32_t NumIDs)
+    (TOS_EvtOperID_T EvtSuberID, TOS_EvtID_T EvtIDs[], uint32_t NumIDs, const TOS_EvtSubArgs_pT pEvtSubArgs)
 {
     if( _mEvtPSDB_SubTable == NULL ){ return TOS_RESULT_BUG;}
 
@@ -257,25 +287,33 @@ TOS_Result_T __PLT_EVT_doSubEvts
     {
         if( _mEvtPSDB_SubTable[row] == NULL )
         {
-            _TOS_EvtPSDB_Row_pT pRow 
+            _TOS_EvtPSDB_Row_pT pEvtSuber 
                 = (_TOS_EvtPSDB_Row_pT)calloc
                     (sizeof(_TOS_EvtPSDB_Row_T) + sizeof(TOS_EvtID_T) * NumIDs, 1);
-            if( pRow == NULL )
+            if( pEvtSuber == NULL )
             {
+                return TOS_RESULT_NOT_ENOUGH_MEMORY;
+            }
+
+            pEvtSuber->EvtPuberID  = EvtSuberID;
+            pEvtSuber->pEvtSubArgs = malloc(sizeof(TOS_EvtSubArgs_T));
+            if( pEvtSuber->pEvtSubArgs == NULL )
+            {
+                free(pEvtSuber);
                 return TOS_RESULT_NOT_ENOUGH_MEMORY;
             }
             else 
             {
-                _mEvtPSDB_SubTable[row] = pRow;
+                *pEvtSuber->pEvtSubArgs = *pEvtSubArgs;
             }
 
-            pRow->EvtPuberID = EvtSuberID;
-            pRow->NumIDs = NumIDs;
+            pEvtSuber->NumIDs = NumIDs;
             for(uint32_t num = 0; num < NumIDs; num++)
             {
-                pRow->EvtIDs[num] = EvtIDs[num];
+                pEvtSuber->EvtIDs[num] = EvtIDs[num];
             }
 
+            _mEvtPSDB_SubTable[row] = pEvtSuber;
             return TOS_RESULT_SUCCESS;
         }
     }
@@ -296,7 +334,7 @@ TOS_Result_T PLT_EVT_subEvts
         return TOS_RESULT_NOT_REGED;
     }
 
-    return __PLT_EVT_doSubEvts(EvtSuberID, EvtIDs, NumIDs);
+    return __PLT_EVT_doSubEvts(EvtSuberID, EvtIDs, NumIDs, pEvtSubArgs);
 }
 
 TOS_Result_T __PLT_EVT_doPostEvtSRT
@@ -310,6 +348,8 @@ TOS_Result_T __PLT_EVT_doPostEvtSRT
         pthread_mutex_unlock(&pEvtQueue->Mutex);
         return TOS_RESULT_TOO_MANY_PUBED_EVENTS;
     }
+
+    pEvtDesc->SeqID = pEvtQueue->SeqID++;
 
     pEvtQueue->EvtDescQueue[pEvtQueue->CurEvtTail] = *pEvtDesc;
     pEvtQueue->CurEvtTail = (pEvtQueue->CurEvtTail + 1) % pEvtQueue->EvtDescQueueNum;

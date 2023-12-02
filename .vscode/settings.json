@@ -1,5 +1,9 @@
 {
-    "cmake.buildArgs": [
+    "cmake.cmakePath": "/opt/homebrew/bin/cmake",
+    "cmake.buildDirectory": "${workspaceFolder}/CMakeBuilt",
+
+    "cmake.configureArgs": [
+        "-DCMAKE_OSX_ARCHITECTURES=arm64",
     ],
 
     "cmake.defaultVariants": {
