@@ -9,6 +9,10 @@
         "-DUSE_UTFWK_GTEST:BOOL=ON",
     ],
 
+    "cmake.debugConfig": {
+        "stopAtEntry": true,
+    },
+
     "cmake.defaultVariants": {
         "buildType": {
             "default": "debug",

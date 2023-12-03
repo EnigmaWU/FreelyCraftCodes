@@ -3,69 +3,21 @@
 /**
  * @brief Typical PubSubEvt Case Lists
  * UT_T1_PubSubEvt_Typical_NN
- *  =[01]: PubEvt/SubEvt, PostEvtSRT/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE
- *  =[02]: PubEvt/SubEvt, PostEvtSRT/CbProcEvtSRT of TOS_EVTID_TEST_MSGDATA
- *  =[03]: PubEvt/SubEvt, PostEvtSRT/CbProcEvtSRT of TOS_EVTID_TEST_ECHO_REQUEST/_ECHO_RESPONSE
+ *  =[01]: 
+ *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_KEEPALIVE * 1024
+ *      UT_B/_C/_D: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE
+ *  =[02]: 
+ *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_KEEPALIVE * 1024 + TOS_EVTID_TEST_MSGDATA * 1024 alternating
+ *      UT_B: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE
+ *      UT_C: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_MSGDATA
+ *      UT_D: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE/_MSGDATA
+ *  TODO:=[03]: PubEvt/SubEvt, PostEvtSRT/CbProcEvtSRT of TOS_EVTID_TEST_ECHO_REQUEST/_ECHO_RESPONSE
  */
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define _UT_OPERATOR_COUNT 12
- typedef struct 
- {
-    TOS_EvtOperID_T EvtOperID_ModObjUT_A[_UT_OPERATOR_COUNT/3];
-    TOS_EvtOperID_T EvtOperID_ModObjUT_B[_UT_OPERATOR_COUNT/3];
-    TOS_EvtOperID_T EvtOperID_ModObjUT_C[_UT_OPERATOR_COUNT/3];
- } _UT_OperatorContext_T, *_UT_OperatorContext_pT;
 
-static _UT_OperatorContext_T _mPubSubCtx = { };
-void _UT_PubSubEvt_Typical_CASE_setupUnitContext(void)
-{
-    TOS_EvtOperArgs_T EvtPuberArgs = { };
+#define _UT_OPERATOR_COUNT      4//UT_A/_B/_C/_D
 
-    for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(_mPubSubCtx.EvtOperID_ModObjUT_A); OperCnt++ )
-    {
-        EvtPuberArgs.ModObjID = TOS_MODOBJID_UT_A;
-        TOS_Result_T Result = PLT_EVT_regOper(&_mPubSubCtx.EvtOperID_ModObjUT_A[OperCnt], &EvtPuberArgs);
-        ASSERT_EQ(Result, TOS_RESULT_SUCCESS);
-    }
-
-    for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(_mPubSubCtx.EvtOperID_ModObjUT_B); OperCnt++ )
-    {
-        EvtPuberArgs.ModObjID = TOS_MODOBJID_UT_B;
-        TOS_Result_T Result = PLT_EVT_regOper(&_mPubSubCtx.EvtOperID_ModObjUT_B[OperCnt], &EvtPuberArgs);
-        ASSERT_EQ(Result, TOS_RESULT_SUCCESS);
-    }
-
-    for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(_mPubSubCtx.EvtOperID_ModObjUT_C); OperCnt++ )
-    {
-        EvtPuberArgs.ModObjID = TOS_MODOBJID_UT_C;
-        TOS_Result_T Result = PLT_EVT_regOper(&_mPubSubCtx.EvtOperID_ModObjUT_C[OperCnt], &EvtPuberArgs);
-        ASSERT_EQ(Result, TOS_RESULT_SUCCESS);
-    }
-    
-    return ;
-}
-
-void _UT_PubSubEvt_Typical_CASE_teardownUnitContext(void)
-{
-    _UT_OperatorContext_pT pPubSubCtx = &_mPubSubCtx;
-
-    for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(pPubSubCtx->EvtOperID_ModObjUT_A); OperCnt++ )
-    {
-        PLT_EVT_unregOper(pPubSubCtx->EvtOperID_ModObjUT_A[OperCnt]);
-    }
-    
-    for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(pPubSubCtx->EvtOperID_ModObjUT_B); OperCnt++ )
-    {
-        PLT_EVT_unregOper(pPubSubCtx->EvtOperID_ModObjUT_B[OperCnt]);
-    }
-
-    for( uint32_t OperCnt=0; OperCnt<TOS_calcArrayElmtCnt(pPubSubCtx->EvtOperID_ModObjUT_C); OperCnt++ )
-    {
-        PLT_EVT_unregOper(pPubSubCtx->EvtOperID_ModObjUT_C[OperCnt]);
-    }
-
-    return;
-}
+ #define _UT_KEEPALIVE_EVT_CNT 1024
+// #define _UT_MSGDATA_EVT_CNT   1024
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -75,13 +27,13 @@ void _UT_PubSubEvt_Typical_CASE_teardownUnitContext(void)
     unsigned long KeepAliveTotalCnt, KeepAliveNextSeqID;
 
     sem_t *pSemAllProced;
- } _UT_EvtSuberPrivT01_T, *_UT_EvtSuberPrivT01_pT;      
+ } _UT_EvtSuberPrivCase01_T, *_UT_EvtSuberPrivCase01_pT;      
 
-static TOS_Result_T __UT_ProcEvtSRT_Typical_01
-    (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToObjPriv)
+static TOS_Result_T __UT_CbProcEvtSRT_Case01
+    (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
-    _UT_EvtSuberPrivT01_pT pEvtSuberPriv = (_UT_EvtSuberPrivT01_pT)pToObjPriv;
-    EXPECT_NE(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+    _UT_EvtSuberPrivCase01_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase01_pT)pToEvtSuberPriv;
+    EXPECT_EQ(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
 
     EXPECT_EQ(pEvtDesc->SeqID, pEvtSuberPriv->KeepAliveNextSeqID);//CheckPoint
     pEvtSuberPriv->KeepAliveNextSeqID++;
@@ -96,58 +48,107 @@ static TOS_Result_T __UT_ProcEvtSRT_Typical_01
     return TOS_RESULT_SUCCESS;
 }
 
-//TOS_EVTID_TEST_KEEPALIVE: 1xEvtPuber, 1xEvtSuber, 1024xPostEvtSRT
-TEST(UT_T1_PubSubEvt_Typical, CASE_01_1xEvtPuber_1xEvtSuber_PostEvtSRT)
+//UT_T1_PubSubEvt_Typical_NN=[01] defined in Typical PubSubEvt Case Lists
+TEST(UT_T1_PubSubEvt_Typical, Case01)
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
-    _UT_PubSubEvt_Typical_CASE_setupUnitContext();
-    _UT_OperatorContext_pT pPubSubCtx = &_mPubSubCtx;
 
-    TOS_EvtOperID_T EvtPuber = pPubSubCtx->EvtOperID_ModObjUT_A[0];
+    //===> EvtPuberA
+    TOS_EvtOperID_T EvtPuberA      = TOS_EVTOPERID_INVALID;
+    TOS_EvtOperArgs_T EvtPuberArgs = { .ModObjID = TOS_MODOBJID_UT_A };
+    Result = PLT_EVT_regOper(&EvtPuberA, &EvtPuberArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
     TOS_EvtID_T PubEvtIDs[] = {TOS_EVTID_TEST_KEEPALIVE};
-    Result = PLT_EVT_pubEvts(EvtPuber, PubEvtIDs, TOS_calcArrayElmtCnt(PubEvtIDs));
-    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+    Result = PLT_EVT_pubEvts(EvtPuberA, PubEvtIDs, TOS_calcArrayElmtCnt(PubEvtIDs));
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
-    TOS_EvtOperID_T EvtSuber = pPubSubCtx->EvtOperID_ModObjUT_B[0];
+    //==> EvtSuberB
+    TOS_EvtOperID_T EvtSuberB = TOS_EVTOPERID_INVALID;
+    TOS_EvtOperArgs_T EvtSuberArgs = { .ModObjID = TOS_MODOBJID_UT_B };
+    Result = PLT_EVT_regOper(&EvtSuberB, &EvtSuberArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
     TOS_EvtID_T SubEvtIDs[] = {TOS_EVTID_TEST_KEEPALIVE};
-    _UT_EvtSuberPrivT01_T EvtSuberPriv = { .EvtSuberID = EvtSuber, .KeepAliveTotalCnt = 1024, .KeepAliveNextSeqID = 0 };
-    EvtSuberPriv.pSemAllProced = sem_open("Sem4EvtProcCompletion", O_CREAT, 0644, 0);
-    //EXPECT_EQ(EvtSuberPriv.pSemAllProced, NULL);
+    _UT_EvtSuberPrivCase01_T EvtSuberPrivB = { .EvtSuberID = EvtSuberB, .KeepAliveTotalCnt = _UT_KEEPALIVE_EVT_CNT, .KeepAliveNextSeqID = 0 };
+    EvtSuberPrivB.pSemAllProced = sem_open("Sem4EvtProcCmpltB", O_CREAT, 0644, 0);
+    ASSERT_NE(EvtSuberPrivB.pSemAllProced, nullptr);
     
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_ProcEvtSRT_Typical_01, .ToObjPriv = &EvtSuberPriv };
-    Result = PLT_EVT_subEvts(EvtSuber, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case01, .ToObjPriv = &EvtSuberPrivB };
+    Result = PLT_EVT_subEvts(EvtSuberB, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //expect_function_calls(__UT_ProcEvtSRT_Typical_01, EvtSuberPriv.KeepAliveTotalCnt);//CheckPoint
+    //===> EvtSuberC
+    TOS_EvtOperID_T EvtSuberC = TOS_EVTOPERID_INVALID;
+    EvtSuberArgs.ModObjID = TOS_MODOBJID_UT_C;
+    Result = PLT_EVT_regOper(&EvtSuberC, &EvtSuberArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    _UT_EvtSuberPrivCase01_T EvtSuberPrivC = { .EvtSuberID = EvtSuberC, .KeepAliveTotalCnt = _UT_KEEPALIVE_EVT_CNT, .KeepAliveNextSeqID = 0 };
+    EvtSuberPrivC.pSemAllProced = sem_open("Sem4EvtProcCmpltC", O_CREAT, 0644, 0);
+    ASSERT_NE(EvtSuberPrivC.pSemAllProced, nullptr);
+
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivC;
+    Result = PLT_EVT_subEvts(EvtSuberC, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //===> EvtSuberD
+    TOS_EvtOperID_T EvtSuberD = TOS_EVTOPERID_INVALID;
+    EvtSuberArgs.ModObjID = TOS_MODOBJID_UT_D;
+    Result = PLT_EVT_regOper(&EvtSuberD, &EvtSuberArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    _UT_EvtSuberPrivCase01_T EvtSuberPrivD = { .EvtSuberID = EvtSuberD, .KeepAliveTotalCnt = _UT_KEEPALIVE_EVT_CNT, .KeepAliveNextSeqID = 0 };
+    EvtSuberPrivD.pSemAllProced = sem_open("Sem4EvtProcCmpltD", O_CREAT, 0644, 0);
+    ASSERT_NE(EvtSuberPrivD.pSemAllProced, nullptr);
+
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivD;
+    Result = PLT_EVT_subEvts(EvtSuberD, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     //-----------------------------------------------------------------------------------------------------------------
     Result = PLT_EVT_enableEvtManger();
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    for( int EvtCnt=0; EvtCnt<EvtSuberPriv.KeepAliveTotalCnt; EvtCnt++ )
+    for( int EvtCnt=0; EvtCnt<EvtSuberPrivB.KeepAliveTotalCnt; EvtCnt++ )
     {
         TOS_EVT_defineEvtDesc(MyTestKeepAliveEvt,TOS_EVTID_TEST_KEEPALIVE);
 
-        Result = PLT_EVT_postEvtSRT(EvtPuber, &MyTestKeepAliveEvt);
+        Result = PLT_EVT_postEvtSRT(EvtPuberA, &MyTestKeepAliveEvt);
         EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
         usleep(1000);
     }
 
     //Wait for all EvtSuberPriv.KeepAliveTotalCnt of MyTestKeepAliveEvt to be processed
-    sem_wait(EvtSuberPriv.pSemAllProced);
-    EXPECT_EQ(EvtSuberPriv.KeepAliveNextSeqID, EvtSuberPriv.KeepAliveTotalCnt);
+    sem_wait(EvtSuberPrivB.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivB.KeepAliveNextSeqID, EvtSuberPrivB.KeepAliveTotalCnt);
+
+    sem_wait(EvtSuberPrivC.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivC.KeepAliveNextSeqID, EvtSuberPrivC.KeepAliveTotalCnt);
+
+    sem_wait(EvtSuberPrivD.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivD.KeepAliveNextSeqID, EvtSuberPrivD.KeepAliveTotalCnt);
 
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_disableEvtManger();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    PLT_EVT_unpubEvts(EvtPuber);
-    PLT_EVT_unsubEvts(EvtSuber);
+    PLT_EVT_unpubEvts(EvtPuberA);
+    PLT_EVT_unsubEvts(EvtSuberB);
+    PLT_EVT_unsubEvts(EvtSuberC);
+    PLT_EVT_unsubEvts(EvtSuberD);
 
-    _UT_PubSubEvt_Typical_CASE_teardownUnitContext();
+    PLT_EVT_unregOper(EvtPuberA);
+    PLT_EVT_unregOper(EvtSuberB);
+    PLT_EVT_unregOper(EvtSuberC);
+    PLT_EVT_unregOper(EvtSuberD);
+}
+
+//UT_T1_PubSubEvt_Typical_NN=[02] defined in Typical PubSubEvt Case Lists
+TEST(UT_T1_PubSubEvt_Typical, Case02)
+{
 }
 
 
@@ -180,6 +181,8 @@ int main(int argc, char *argv[])
     testing::InitGoogleTest();
 
     UTG_T1_PubSubEvt_Typical_setupGroupContext();
+    int RetRAT = RUN_ALL_TESTS();
+    UTG_T1_PubSubEvt_Typical_teardownGroupContext();
 
-    return RUN_ALL_TESTS();
+    return RetRAT;
 }

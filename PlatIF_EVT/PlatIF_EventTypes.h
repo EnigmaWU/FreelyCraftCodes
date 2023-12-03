@@ -26,6 +26,7 @@ typedef uint32_t TOS_EvtID_T;//RefMore: TOS_MAKE_EVTID and TOS_EVTID_*_*_* in Pl
 typedef uint32_t TOS_EvtFlags_T;
 
 typedef uint32_t TOS_EvtOperID_T;
+#define TOS_EVTOPERID_INVALID 0xFFFFFFFFUL
 
 typedef struct {
     TOS_ModObjID_T FromModObjID;
