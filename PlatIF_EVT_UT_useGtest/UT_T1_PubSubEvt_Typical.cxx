@@ -74,7 +74,9 @@ TEST(UT_T1_PubSubEvt_Typical, Case01)
     EvtSuberPrivB.pSemAllProced = sem_open("Sem4EvtProcCmpltB", O_CREAT, 0644, 0);
     ASSERT_NE(EvtSuberPrivB.pSemAllProced, nullptr);
     
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case01, .ToObjPriv = &EvtSuberPrivB };
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case01, };
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivB;
+
     Result = PLT_EVT_subEvts(EvtSuberB, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
@@ -89,6 +91,7 @@ TEST(UT_T1_PubSubEvt_Typical, Case01)
     ASSERT_NE(EvtSuberPrivC.pSemAllProced, nullptr);
 
     EvtSubArgs.ToObjPriv = &EvtSuberPrivC;
+
     Result = PLT_EVT_subEvts(EvtSuberC, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
@@ -103,6 +106,7 @@ TEST(UT_T1_PubSubEvt_Typical, Case01)
     ASSERT_NE(EvtSuberPrivD.pSemAllProced, nullptr);
 
     EvtSubArgs.ToObjPriv = &EvtSuberPrivD;
+    
     Result = PLT_EVT_subEvts(EvtSuberD, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
@@ -123,13 +127,13 @@ TEST(UT_T1_PubSubEvt_Typical, Case01)
 
     //Wait for all EvtSuberPriv.KeepAliveTotalCnt of MyTestKeepAliveEvt to be processed
     sem_wait(EvtSuberPrivB.pSemAllProced);
-    EXPECT_EQ(EvtSuberPrivB.KeepAliveNextSeqID, EvtSuberPrivB.KeepAliveTotalCnt);
+    EXPECT_EQ(EvtSuberPrivB.KeepAliveNextSeqID, _UT_KEEPALIVE_EVT_CNT);
 
     sem_wait(EvtSuberPrivC.pSemAllProced);
-    EXPECT_EQ(EvtSuberPrivC.KeepAliveNextSeqID, EvtSuberPrivC.KeepAliveTotalCnt);
+    EXPECT_EQ(EvtSuberPrivC.KeepAliveNextSeqID, _UT_KEEPALIVE_EVT_CNT);
 
     sem_wait(EvtSuberPrivD.pSemAllProced);
-    EXPECT_EQ(EvtSuberPrivD.KeepAliveNextSeqID, EvtSuberPrivD.KeepAliveTotalCnt);
+    EXPECT_EQ(EvtSuberPrivD.KeepAliveNextSeqID, _UT_KEEPALIVE_EVT_CNT);
 
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_disableEvtManger();
