@@ -1,5 +1,10 @@
 
 #include "PlatIF_EventTypes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Interface Call Flow:
  *  1. PLT_EVT_initEvtManger() to init EvtManger.
@@ -125,3 +130,7 @@ TOS_Result_T PLT_EVT_enableEvtManger(void);
     }
 
 //TOS_EVT_[alloc,free]EvtDesc
+
+#ifdef __cplusplus
+}
+#endif

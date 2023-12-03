@@ -9,9 +9,9 @@
             "request": "launch",
             "name": "Debug",
             "program": "${command:cmake.launchTargetPath}",
-            //"args": ["--debug=lldb"],
+            "args": ["--debug=lldb", "--debug-transport=tcp:5395"],
             "cwd": "${command:cmake.getLaunchTargetDirectory}",
-            "env": {"CRITERION_VERBOSITY_LEVEL":"5"},
+            //"env": {"CRITERION_VERBOSITY_LEVEL":"5"},
         }
     ]
 }

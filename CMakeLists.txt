@@ -1,14 +1,20 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(MyCraftCodes LANGUAGES C)
+project(MyCraftCodes LANGUAGES C CXX)
 
 set(CMAKE_C_COMPILER /usr/bin/clang)
+set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 option(CONFIG_BUILD_UNIT_TESTING "Build unit test" ON)
 
 if(CMAKE_BUILD_TYPE STREQUAL "DiagASAN")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=address -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fno-omit-frame-pointer")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
 elseif(CMAKE_BUILD_TYPE STREQUAL "DiagTSAN")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=thread -fno-omit-frame-pointer")
@@ -43,10 +49,17 @@ if(CONFIG_BUILD_UNIT_TESTING)
     target_compile_definitions(${LIB_EVT} PRIVATE CONFIG_BUILD_WITH_UNIT_TESTING)
 
     enable_testing()
-    
-    if(APPLE)
-        add_subdirectory(PlatIF_EVT_UT_useCriterion)#MacOS use criterion
-    else()
-        add_subdirectory(PlatIF_EVT_UT_useCmocka)#Linux use cmocka
+
+    if(USE_UTFWK_CMOCKA)
+        add_subdirectory(PlatIF_EVT_UT_useCmocka)
     endif()
+
+    if(USE_UTFWK_CRITERION)
+        add_subdirectory(PlatIF_EVT_UT_useCriterion)
+    endif()
+
+    if(USE_UTFWK_GTEST)
+        add_subdirectory(PlatIF_EVT_UT_useGtest)
+    endif()
+
 endif()
