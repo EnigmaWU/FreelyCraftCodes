@@ -51,16 +51,16 @@ static TOS_Result_T __PLT_EVT_doRegOper
     {
         if( _mRegedOperObjs[idx] == NULL )
         {
-            _mRegedOperObjs[idx] = (_TOS_EvtOperObj_pT)calloc(sizeof(_TOS_EvtOperObj_T), 1);
-            if( _mRegedOperObjs[idx] == NULL )
+            _TOS_EvtOperObj_pT pEvtOperObj = (_TOS_EvtOperObj_pT)calloc(sizeof(_TOS_EvtOperObj_T), 1);
+            if( pEvtOperObj == NULL )
             {
                 return TOS_RESULT_NOT_ENOUGH_MEMORY;
             }
 
-            _mRegedOperObjs[idx]->EvtOperID = idx;
-            _mRegedOperObjs[idx]->EvtOperArgs = *pEvtOperArgs;
+            pEvtOperObj->EvtOperArgs = *pEvtOperArgs;
+            *pEvtOperID = pEvtOperObj->EvtOperID = idx;
 
-            *pEvtOperID = idx;
+            _mRegedOperObjs[idx] = pEvtOperObj;
             return TOS_RESULT_SUCCESS;
         }
     }
@@ -226,8 +226,9 @@ static TOS_Result_T __PLT_EVT_doPubEvts
                 _mEvtPSDB_PubTable[row] = pRow;
             }
 
+            pRow->NumIDs     = NumIDs;
             pRow->EvtPuberID = EvtPuberID;
-            pRow->NumIDs = NumIDs;
+            
             for(uint32_t num = 0; num < NumIDs; num++)
             {
                 pRow->EvtIDs[num] = EvtIDs[num];
@@ -486,20 +487,96 @@ void PLT_EVT_deinitEvtManger(void)
 {
     return;
 }
+
 void PLT_EVT_unsubEvts(/*ARG_IN*/TOS_EvtOperID_T EvtOperID)
 {
+    if( _mEvtPSDB_SubTable == NULL ){ return;}
 
+    for(uint32_t row = 0; row < _mMaySubEvtNumMax; row++)
+    {
+        if( _mEvtPSDB_SubTable[row] 
+            && _mEvtPSDB_SubTable[row]->EvtSuberID == EvtOperID )
+        {
+            if( _mEvtPSDB_SubTable[row]->pEvtSubArgs )
+            {
+                free(_mEvtPSDB_SubTable[row]->pEvtSubArgs);
+                _mEvtPSDB_SubTable[row]->pEvtSubArgs = NULL;
+            }
+
+            free(_mEvtPSDB_SubTable[row]);
+            _mEvtPSDB_SubTable[row] = NULL;
+            return;
+        }
+    }
+    
 }
+
 void PLT_EVT_unpubEvts(/*ARG_IN*/TOS_EvtOperID_T EvtOperID)
 {
+    if( _mEvtPSDB_PubTable == NULL ){ return;}
+
+    for(uint32_t row = 0; row < _mMayPubEvtNumMax; row++)
+    {
+        if( _mEvtPSDB_PubTable[row] 
+            && _mEvtPSDB_PubTable[row]->EvtPuberID == EvtOperID )
+        {
+            free(_mEvtPSDB_PubTable[row]);
+            _mEvtPSDB_PubTable[row] = NULL;
+            return;
+        }
+    }
+}
+
+static void __PLT_EVT_doDisableEvtManger_ofStopEvtProcer(void)
+{
+    if( _mEvtQueueProcer == NULL ){ return;}
+
+    for(uint16_t idx = 0; idx < _mMayEvtQueueNumMax; idx++)
+    {
+        if( _mEvtQueueProcer[idx] )
+        {
+            pthread_cancel(_mEvtQueueProcer[idx]->TID);
+            pthread_join(_mEvtQueueProcer[idx]->TID, NULL);
+
+            pthread_mutex_destroy(&_mEvtQueueProcer[idx]->Mutex);
+            pthread_cond_destroy(&_mEvtQueueProcer[idx]->Cond);
+
+            free(_mEvtQueueProcer[idx]);
+            _mEvtQueueProcer[idx] = NULL;
+        }
+    }
+
+    return;
 
 }
+
 void PLT_EVT_disableEvtManger(void)
 {
+    if( _mEvtMangerState == _EVTMGR_STATE_RUNNING )
+    {
+        __PLT_EVT_doDisableEvtManger_ofStopEvtProcer();
+        _mEvtMangerState = _EVTMGR_STATE_READY;
+    }
+
     return;
 }
+
+
 void PLT_EVT_unregOper(/*ARG_IN*/ TOS_EvtOperID_T EvtOperID)
 {
+    if( _mRegedOperObjs == NULL ){ return;}
+
+    for(uint16_t idx = 0; idx < _mMayRegOperNumMax; idx++)
+    {
+        if( _mRegedOperObjs[idx] 
+            && _mRegedOperObjs[idx]->EvtOperID == EvtOperID )
+        {
+            free(_mRegedOperObjs[idx]);
+            _mRegedOperObjs[idx] = NULL;
+            return;
+        }
+    }
+
     return;
 }
 #endif//CONFIG_BUILD_WITH_UNIT_TESTING

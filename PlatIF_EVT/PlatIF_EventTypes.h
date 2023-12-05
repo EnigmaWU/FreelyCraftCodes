@@ -25,7 +25,7 @@ typedef uint32_t TOS_EvtID_T;//RefMore: TOS_MAKE_EVTID and TOS_EVTID_*_*_* in Pl
 
 typedef uint32_t TOS_EvtFlags_T;
 
-typedef uint32_t TOS_EvtOperID_T;
+typedef unsigned long TOS_EvtOperID_T;//MAKE_SURE::sizeof(unsigned long)==sizeof(void*)
 #define TOS_EVTOPERID_INVALID 0xFFFFFFFFUL
 
 typedef struct {

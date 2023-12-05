@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(MyCraftCodes LANGUAGES C CXX)
 
-#set(CMAKE_C_COMPILER /usr/bin/clang)
-#set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+set(CMAKE_C_COMPILER /opt/homebrew/opt/llvm/bin/clang)
+set(CMAKE_CXX_COMPILER /opt/homebrew/opt/llvm/bin/clang++)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 14)
