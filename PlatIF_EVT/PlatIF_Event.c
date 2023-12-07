@@ -51,7 +51,8 @@ static TOS_Result_T __PLT_EVT_doRegOper
     {
         if( _mRegedOperObjs[idx] == NULL )
         {
-            _TOS_EvtOperObj_pT pEvtOperObj = (_TOS_EvtOperObj_pT)calloc(sizeof(_TOS_EvtOperObj_T), 1);
+            _TOS_EvtOperObj_pT pEvtOperObj 
+                = (_TOS_EvtOperObj_pT)calloc(1, sizeof(_TOS_EvtOperObj_T));
             if( pEvtOperObj == NULL )
             {
                 return TOS_RESULT_NOT_ENOUGH_MEMORY;

@@ -4,21 +4,28 @@
 /**
  * @brief Typical PubSubEvt Case Lists
  * UT_T1_PubSubEvt_Typical_NN
- *  =[01]: 
+ *  =[Case01]: 
  *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_KEEPALIVE * 1024
  *      UT_B/_C/_D: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE
- *  =[02]: 
+ *  =[Case02]: 
  *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_KEEPALIVE * 1024 + TOS_EVTID_TEST_MSGDATA * 1024 alternating
  *      UT_B: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE
  *      UT_C: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_MSGDATA
  *      UT_D: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE/_MSGDATA
- *  TODO:=[03]: PubEvt/SubEvt, PostEvtSRT/CbProcEvtSRT of TOS_EVTID_TEST_ECHO_REQUEST/_ECHO_RESPONSE
+ *  =[Case03]:
+ *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_ECHO_REQUEST * 1024
+ *          SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_ECHO_RESPONSE
+ *      UT_B: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_ECHO_REQUEST
+ *          PubEvt/PostEvtSRT of TOS_EVTID_TEST_ECHO_RESPONSE
+ *      UT_C/_D: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_ECHO_RESPONSE
+ *  TODO(@W)=[Case04]:...
  */
 
 #define _UT_OPERATOR_COUNT      4//UT_A/_B/_C/_D
 
-#define _UT_KEEPALIVE_EVT_CNT 1024
-#define _UT_MSGDATA_EVT_CNT   1024
+#define _UT_KEEPALIVE_EVT_CNT       1024
+#define _UT_MSGDATA_EVT_CNT         1024
+#define _UT_ECHO_REQUEST_EVT_CNT    1024
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -360,8 +367,223 @@ TEST(UT_T1_PubSubEvt_Typical, Case02)
     PLT_EVT_unsubEvts(EvtSuberB);
     PLT_EVT_unsubEvts(EvtSuberC);
     PLT_EVT_unsubEvts(EvtSuberD);
+
+    PLT_EVT_unregOper(EvtPuberA);
+    PLT_EVT_unregOper(EvtSuberB);
+    PLT_EVT_unregOper(EvtSuberC);
+    PLT_EVT_unregOper(EvtSuberD);
+    
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+typedef struct 
+{
+    TOS_EvtOperID_T EvtSuberID; 
+    unsigned long EchoResponseTotalCnt, EchoResponseProcedCnt;
+
+    sem_t *pSemAllProced;
+} _UT_EvtSuberPrivCase03_ofA_T, *_UT_EvtSuberPrivCase03_ofA_pT;
+
+static TOS_Result_T __UT_CbProcEvtSRT_Case03_ofA
+    (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
+{
+    _UT_EvtSuberPrivCase03_ofA_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase03_ofA_pT)pToEvtSuberPriv;
+    EXPECT_EQ(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+
+    pEvtSuberPriv->EchoResponseProcedCnt++;
+
+    TOS_EvtID_T EvtID = pEvtDesc->EvtID;
+    EXPECT_EQ(EvtID, TOS_EVTID_TEST_ECHO_RESPONSE);//CheckPoint
+
+    if( pEvtSuberPriv->EchoResponseProcedCnt == pEvtSuberPriv->EchoResponseTotalCnt )
+    {
+        sem_post(pEvtSuberPriv->pSemAllProced);
+    }
+    return TOS_RESULT_SUCCESS;
+}
+
+typedef struct 
+{
+    TOS_EvtOperID_T EvtSuberID; 
+    unsigned long EchoRequestTotalCnt, EchoRequestProcedCnt;
+
+    sem_t *pSemAllProced;
+} _UT_EvtSuberPrivCase03_ofB_T, *_UT_EvtSuberPrivCase03_ofB_pT;
+
+static TOS_Result_T __UT_CbProcEvtSRT_Case03_ofB
+    (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
+{
+    _UT_EvtSuberPrivCase03_ofB_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase03_ofB_pT)pToEvtSuberPriv;
+    EXPECT_EQ(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+
+    pEvtSuberPriv->EchoRequestProcedCnt++;
+
+    TOS_EvtID_T EvtID = pEvtDesc->EvtID;
+    EXPECT_EQ(EvtID, TOS_EVTID_TEST_ECHO_REQUEST);//CheckPoint
+
+    //Post EchoResponse
+    TOS_EVT_defineEvtDesc(MyTestEchoResponseEvt,TOS_EVTID_TEST_ECHO_RESPONSE);
+    TOS_Result_T Result = PLT_EVT_postEvtSRT(EvtSuberID, &MyTestEchoResponseEvt);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    if( pEvtSuberPriv->EchoRequestProcedCnt == pEvtSuberPriv->EchoRequestTotalCnt )
+    {
+        sem_post(pEvtSuberPriv->pSemAllProced);
+    }
+    return TOS_RESULT_SUCCESS;
+}
+
+typedef struct 
+{
+    TOS_EvtOperID_T EvtSuberID; 
+    unsigned long EchoResponseTotalCnt, EchoResponseProcedCnt;
+
+    sem_t *pSemAllProced;
+} _UT_EvtSuberPrivCase03_ofCD_T, *_UT_EvtSuberPrivCase03_ofCD_pT;
+
+static TOS_Result_T __UT_CbProcEvtSRT_Case03_ofCD
+    (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
+{
+    _UT_EvtSuberPrivCase03_ofCD_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase03_ofCD_pT)pToEvtSuberPriv;
+    EXPECT_EQ(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+
+    pEvtSuberPriv->EchoResponseProcedCnt++;
+
+    TOS_EvtID_T EvtID = pEvtDesc->EvtID;
+    EXPECT_EQ(EvtID, TOS_EVTID_TEST_ECHO_RESPONSE);//CheckPoint
+
+    if( pEvtSuberPriv->EchoResponseProcedCnt == pEvtSuberPriv->EchoResponseTotalCnt )
+    {
+        sem_post(pEvtSuberPriv->pSemAllProced);
+    }
+    return TOS_RESULT_SUCCESS;
+}
+
+//UT_T1_PubSubEvt_Typical_NN=[Case03] defined in Typical PubSubEvt Case Lists
+TEST(UT_T1_PubSubEvt_Typical, Case03)
+{
+    TOS_Result_T Result = TOS_RESULT_BUG;
+
+    //===> EvtOperA = EvtPubA + EvtSubB
+    TOS_EvtOperID_T EvtOperA      = TOS_EVTOPERID_INVALID;
+    TOS_EvtOperArgs_T EvtOperArgs = { .ModObjID = TOS_MODOBJID_UT_A };
+    Result = PLT_EVT_regOper(&EvtOperA, &EvtOperArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtID_T PubEvtIDs_ofA[] = {TOS_EVTID_TEST_ECHO_REQUEST};
+    Result = PLT_EVT_pubEvts(EvtOperA, PubEvtIDs_ofA, TOS_calcArrayElmtCnt(PubEvtIDs_ofA));
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtID_T SubEvtIDs_ofA[] = {TOS_EVTID_TEST_ECHO_RESPONSE};
+    _UT_EvtSuberPrivCase03_ofA_T EvtSuberPrivA = { .EvtSuberID = EvtOperA, .EchoResponseTotalCnt = _UT_ECHO_REQUEST_EVT_CNT, .EchoResponseProcedCnt = 0 };
+    EvtSuberPrivA.pSemAllProced = sem_open("Sem4EvtProcCmpltA", O_CREAT, 0644, 0);
+    ASSERT_NE(EvtSuberPrivA.pSemAllProced, nullptr);
+
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case03_ofA, };
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivA;
+
+    Result = PLT_EVT_subEvts(EvtOperA, SubEvtIDs_ofA, TOS_calcArrayElmtCnt(SubEvtIDs_ofA), &EvtSubArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //===> EvtOperB = EvtPubB + EvtSubA
+    TOS_EvtOperID_T EvtOperB = TOS_EVTOPERID_INVALID;
+    EvtOperArgs.ModObjID = TOS_MODOBJID_UT_B;
+    Result = PLT_EVT_regOper(&EvtOperB, &EvtOperArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtID_T PubEvtIDs_ofB[] = {TOS_EVTID_TEST_ECHO_RESPONSE};
+    Result = PLT_EVT_pubEvts(EvtOperB, PubEvtIDs_ofB, TOS_calcArrayElmtCnt(PubEvtIDs_ofB));
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtID_T SubEvtIDs_ofB[] = {TOS_EVTID_TEST_ECHO_REQUEST};
+    _UT_EvtSuberPrivCase03_ofB_T EvtSuberPrivB = { .EvtSuberID = EvtOperB, .EchoRequestTotalCnt = _UT_ECHO_REQUEST_EVT_CNT, .EchoRequestProcedCnt = 0 };
+    EvtSuberPrivB.pSemAllProced = sem_open("Sem4EvtProcCmpltB", O_CREAT, 0644, 0);
+    ASSERT_NE(EvtSuberPrivB.pSemAllProced, nullptr);
+
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivB;
+    EvtSubArgs.CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case03_ofB;
+
+    Result = PLT_EVT_subEvts(EvtOperB, SubEvtIDs_ofB, TOS_calcArrayElmtCnt(SubEvtIDs_ofB), &EvtSubArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //===> EvtSuberC/D
+    TOS_EvtOperID_T EvtSuberC = TOS_EVTOPERID_INVALID;
+    EvtOperArgs.ModObjID = TOS_MODOBJID_UT_C;
+    Result = PLT_EVT_regOper(&EvtSuberC, &EvtOperArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtOperID_T EvtSuberD = TOS_EVTOPERID_INVALID;
+    EvtOperArgs.ModObjID = TOS_MODOBJID_UT_D;
+    Result = PLT_EVT_regOper(&EvtSuberD, &EvtOperArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtID_T SubEvtIDs_ofCD[] = {TOS_EVTID_TEST_ECHO_RESPONSE};
+    _UT_EvtSuberPrivCase03_ofCD_T EvtSuberPrivC = { .EvtSuberID = EvtSuberC, .EchoResponseTotalCnt = _UT_ECHO_REQUEST_EVT_CNT, .EchoResponseProcedCnt = 0 };
+    EvtSuberPrivC.pSemAllProced = sem_open("Sem4EvtProcCmpltC", O_CREAT, 0644, 0);
+    ASSERT_NE(EvtSuberPrivC.pSemAllProced, nullptr);
+
+    _UT_EvtSuberPrivCase03_ofCD_T EvtSuberPrivD = { .EvtSuberID = EvtSuberD, .EchoResponseTotalCnt = _UT_ECHO_REQUEST_EVT_CNT, .EchoResponseProcedCnt = 0 };
+    EvtSuberPrivD.pSemAllProced = sem_open("Sem4EvtProcCmpltD", O_CREAT, 0644, 0);
+    ASSERT_NE(EvtSuberPrivD.pSemAllProced, nullptr);
+
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivC;
+    EvtSubArgs.CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case03_ofCD;
+
+    Result = PLT_EVT_subEvts(EvtSuberC, SubEvtIDs_ofCD, TOS_calcArrayElmtCnt(SubEvtIDs_ofCD), &EvtSubArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivD;
+    EvtSubArgs.CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case03_ofCD;
+
+    Result = PLT_EVT_subEvts(EvtSuberD, SubEvtIDs_ofCD, TOS_calcArrayElmtCnt(SubEvtIDs_ofCD), &EvtSubArgs);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //-----------------------------------------------------------------------------------------------------------------
+    Result = PLT_EVT_enableEvtManger();
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    for( int EvtCnt=0; EvtCnt<_UT_ECHO_REQUEST_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestEchoRequestEvt,TOS_EVTID_TEST_ECHO_REQUEST);
+
+        Result = PLT_EVT_postEvtSRT(EvtOperA, &MyTestEchoRequestEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+
+    //Wait for all EvtSuberPriv.EchoResponseTotalCnt of MyTestEchoResponseEvt to be processed
+    sem_wait(EvtSuberPrivA.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivA.EchoResponseProcedCnt, _UT_ECHO_REQUEST_EVT_CNT);
+
+    sem_wait(EvtSuberPrivB.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivB.EchoRequestProcedCnt, _UT_ECHO_REQUEST_EVT_CNT);
+
+    sem_wait(EvtSuberPrivC.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivC.EchoResponseProcedCnt, _UT_ECHO_REQUEST_EVT_CNT);
+
+    sem_wait(EvtSuberPrivD.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivD.EchoResponseProcedCnt, _UT_ECHO_REQUEST_EVT_CNT);
+
+    //-----------------------------------------------------------------------------------------------------------------
+    PLT_EVT_disableEvtManger();
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    PLT_EVT_unpubEvts(EvtOperA);
+    PLT_EVT_unsubEvts(EvtOperA);
+
+    PLT_EVT_unpubEvts(EvtOperB);
+    PLT_EVT_unsubEvts(EvtOperB);
+
+    PLT_EVT_unsubEvts(EvtSuberC);
+    PLT_EVT_unsubEvts(EvtSuberD);
+
+    PLT_EVT_unregOper(EvtOperA);
+    PLT_EVT_unregOper(EvtOperB);
+    PLT_EVT_unregOper(EvtSuberC);
+    PLT_EVT_unregOper(EvtSuberD);
+}
 
 void UTG_T1_PubSubEvt_Typical_setupGroupContext(void)
 {
