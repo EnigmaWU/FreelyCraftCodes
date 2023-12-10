@@ -631,12 +631,13 @@ typedef struct
 {
     pthread_t   ThreadID;
 
-    sem_t       Sem4ReadyState;  //1: VMainObj in ThreadA do some initialization work such Pub/Sub some Evt,
-                                 //     then post Sem4ReadyState to notify MAIN that VMainObj is in ReadyStage.
-    sem_t       Sem4EnterRunning;//VMainObj wait MAIN to post Sem4EnterRunning to notify VMainObj to enter RunningStage.
-    sem_t       Sem4LeaveRunning;//VMainObj post Sem4LeaveRunning to notify MAIN that VMainObj is leaving RunningStage.
-    sem_t       Sem4ExitState;   //VMainObj wait MAIN to post Sem4ExitState to notify VMainObj to exit.
-} _UT_CtxThreadA_ofVMainObj_T, *_UT_CtxThreadA_ofVMainObj_pT;
+    //ModObj=VMainObj|RCAgent|ChassisObj|PalletObj|CDObj
+    sem_t       *pSem4ReadyState;  //1: ModObj in ThreadA do some initialization work such Pub/Sub some Evt,
+                                 //     then post Sem4ReadyState to notify MAIN that ModObj is in ReadyStage.
+    sem_t       *pSem4EnterRunning;//ModObj wait MAIN to post Sem4EnterRunning to notify ModObj to enter RunningStage.
+    sem_t       *pSem4LeaveRunning;//ModObj post Sem4LeaveRunning to notify MAIN that ModObj is leaving RunningStage.
+    sem_t       *pSem4ExitState;   //ModObj wait MAIN to post Sem4ExitState to notify ModObj to exit.
+} _UT_CtxThreadABCDE_ModObj_T, *_UT_CtxThreadABCDE_ModObj_pT;
 
 typedef struct 
 {
@@ -676,7 +677,7 @@ static inline TOS_Result_T __UT_CbProcEvtSRT_Case04_ofA
 static void* __UT_ThreadA_ofVMainObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
-    _UT_CtxThreadA_ofVMainObj_pT pVMainObj = (_UT_CtxThreadA_ofVMainObj_pT)arg;
+    _UT_CtxThreadABCDE_ModObj_pT pVMainObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
     EXPECT_NE(pVMainObj, nullptr);
 
     //-----------------------------------------------------------------------------------------------------------------
@@ -714,8 +715,8 @@ static void* __UT_ThreadA_ofVMainObj( void* arg )
 
     
     //-----------------------------------------------------------------------------------------------------------------
-    sem_post(&pVMainObj->Sem4ReadyState);//Notify MAIN that VMainObj is in ReadyStage.
-    sem_wait(&pVMainObj->Sem4EnterRunning);//Wait for MAIN to notify VMainObj to enter RunningStage.
+    sem_post(pVMainObj->pSem4ReadyState);//Notify MAIN that VMainObj is in ReadyStage.
+    sem_wait(pVMainObj->pSem4EnterRunning);//Wait for MAIN to notify VMainObj to enter RunningStage.
 
     //-----------------------------------------------------------------------------------------------------------------
     for( int EvtCnt=0; EvtCnt<_UT_MSGDATA_EVT_CNT; EvtCnt++ )
@@ -734,8 +735,8 @@ static void* __UT_ThreadA_ofVMainObj( void* arg )
     EXPECT_EQ(EvtSuberPrivA.CmdAckProcedCnt, _UT_CMD_X1_EVT_CNT + _UT_CMD_X2_EVT_CNT + _UT_CMD_X3_EVT_CNT + _UT_CMD_X4_EVT_CNT);
 
     //-----------------------------------------------------------------------------------------------------------------
-    sem_post(&pVMainObj->Sem4LeaveRunning);//Notify MAIN that VMainObj is leaving RunningStage.
-    sem_wait(&pVMainObj->Sem4ExitState);//Wait for MAIN to notify VMainObj to exit.
+    sem_post(pVMainObj->pSem4LeaveRunning);//Notify MAIN that VMainObj is leaving RunningStage.
+    sem_wait(pVMainObj->pSem4ExitState);//Wait for MAIN to notify VMainObj to exit.
 
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_unpubEvts(EvtPuberA);
@@ -748,35 +749,191 @@ static void* __UT_ThreadA_ofVMainObj( void* arg )
 
 //---------------------------------------------------------------------------------------------------------------------
 //RCAgentObj in ThreadB(RefMore: [Case04]:UT_B(as RemogeControlAgentObj a.k.a RCAgentObj)@Thread_B
-typedef struct 
+static void* __UT_ThreadB_ofRCAgentObj( void* arg )
 {
+    TOS_Result_T Result = TOS_RESULT_BUG;
+    _UT_CtxThreadABCDE_ModObj_pT pRCAgentObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
+    EXPECT_NE(pRCAgentObj, nullptr);
 
-} _UT_CtxThreadB_ofRCAgentObj_T, *_UT_CtxThreadB_ofRCAgentObj_pT;
+    //-----------------------------------------------------------------------------------------------------------------
+    //RCAgentObj in ThreadB do some initialization work:
+    //  1. regEvtOper as EvtPuberB and EvtSuberB
+    //  2. pubEvts(TOS_EVTID_TEST_CMD_X[1-4]_ACK) with EvtPuberB
+    //  3. subEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtSuberB
+
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 //ChassicObj in ThreadC(RefMore: [Case04]:UT_C(as ChassicObj)@Thread_C
-typedef struct
+static void* __UT_ThreadC_ofChassicObj( void* arg )
 {
+    TOS_Result_T Result = TOS_RESULT_BUG;
+    _UT_CtxThreadABCDE_ModObj_pT pChassicObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
+    EXPECT_NE(pChassicObj, nullptr);
 
-} _UT_CtxThreadC_ofChassicObj_T, *_UT_CtxThreadC_ofChassicObj_pT;
+    //-----------------------------------------------------------------------------------------------------------------
+    //ChassicObj in ThreadC do some initialization work:
+    //  1. regEvtOper as EvtPuberC and EvtSuberC
+    //  2. pubEvts(TOS_EVTID_TEST_CMD_X[1-4]_ACK) with EvtPuberC
+    //  3. subEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtSuberC
+
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 //PalletObj in ThreadD(RefMore: [Case04]:UT_D(as PalletObj)@Thread_D
-typedef struct
+static void* __UT_ThreadD_ofPalletObj( void* arg )
 {
+    TOS_Result_T Result = TOS_RESULT_BUG;
+    _UT_CtxThreadABCDE_ModObj_pT pPalletObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
+    EXPECT_NE(pPalletObj, nullptr);
 
-} _UT_CtxThreadD_ofPalletObj_T, *_UT_CtxThreadD_ofPalletObj_pT;
+    //-----------------------------------------------------------------------------------------------------------------
+    //PalletObj in ThreadD do some initialization work:
+    //  1. regEvtOper as EvtPuberD and EvtSuberD
+    //  2. pubEvts(TOS_EVTID_TEST_CMD_X[1-4]_ACK) with EvtPuberD
+    //  3. subEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtSuberD
+
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 //CDObj in ThreadE(RefMore: [Case04]:UT_E(as CollisionDetectorObj)@Thread_E
-typedef struct
+static void* __UT_ThreadE_ofCDObj( void* arg )
 {
+    TOS_Result_T Result = TOS_RESULT_BUG;
+    _UT_CtxThreadABCDE_ModObj_pT pCDObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
+    EXPECT_NE(pCDObj, nullptr);
 
-} _UT_CtxThreadE_ofCDObj_T, *_UT_CtxThreadE_ofCDObj_pT;
+    //-----------------------------------------------------------------------------------------------------------------
+    //CDObj in ThreadE do some initialization work:
+    //  1. regEvtOper as EvtPuberE and EvtSuberE
+    //  2. pubEvts(TOS_EVTID_TEST_CMD_X[1-4]_ACK) with EvtPuberE
+    //  3. subEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtSuberE
+
+}
 
 //UT_T1_PubSubEvt_Typical_NN=[04] defined in Typical PubSubEvt Case Lists
 TEST(UT_T1_PubSubEvt_Typical, Case04)
 {
+    _UT_CtxThreadABCDE_ModObj_T VMainObj = {};
+    _UT_CtxThreadABCDE_ModObj_T RCAgentObj = {};
+    _UT_CtxThreadABCDE_ModObj_T ChassicObj = {};
+    _UT_CtxThreadABCDE_ModObj_T PalletObj = {};
+    _UT_CtxThreadABCDE_ModObj_T CDObj = {};
+
+    VMainObj.pSem4ReadyState = sem_open("ThreadA_Sem4ReadyState", O_CREAT, 0644, 0);
+    ASSERT_NE(VMainObj.pSem4ReadyState, nullptr);
+    VMainObj.pSem4EnterRunning = sem_open("ThreadA_Sem4EnterRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(VMainObj.pSem4EnterRunning, nullptr);
+    VMainObj.pSem4LeaveRunning = sem_open("ThreadA_Sem4LeaveRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(VMainObj.pSem4LeaveRunning, nullptr);
+    VMainObj.pSem4ExitState = sem_open("ThreadA_Sem4ExitState", O_CREAT, 0644, 0);
+    ASSERT_NE(VMainObj.pSem4ExitState, nullptr);
+
+    RCAgentObj.pSem4ReadyState = sem_open("ThreadB_Sem4ReadyState", O_CREAT, 0644, 0);
+    ASSERT_NE(RCAgentObj.pSem4ReadyState, nullptr);
+    RCAgentObj.pSem4EnterRunning = sem_open("ThreadB_Sem4EnterRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(RCAgentObj.pSem4EnterRunning, nullptr);
+    RCAgentObj.pSem4LeaveRunning = sem_open("ThreadB_Sem4LeaveRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(RCAgentObj.pSem4LeaveRunning, nullptr);
+    RCAgentObj.pSem4ExitState = sem_open("ThreadB_Sem4ExitState", O_CREAT, 0644, 0);
+    ASSERT_NE(RCAgentObj.pSem4ExitState, nullptr);
+
+    ChassicObj.pSem4ReadyState = sem_open("ThreadC_Sem4ReadyState", O_CREAT, 0644, 0);
+    ASSERT_NE(ChassicObj.pSem4ReadyState, nullptr);
+    ChassicObj.pSem4EnterRunning = sem_open("ThreadC_Sem4EnterRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(ChassicObj.pSem4EnterRunning, nullptr);
+    ChassicObj.pSem4LeaveRunning = sem_open("ThreadC_Sem4LeaveRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(ChassicObj.pSem4LeaveRunning, nullptr);
+    ChassicObj.pSem4ExitState = sem_open("ThreadC_Sem4ExitState", O_CREAT, 0644, 0);
+    ASSERT_NE(ChassicObj.pSem4ExitState, nullptr);
+
+    PalletObj.pSem4ReadyState = sem_open("ThreadD_Sem4ReadyState", O_CREAT, 0644, 0);
+    ASSERT_NE(PalletObj.pSem4ReadyState, nullptr);
+    PalletObj.pSem4EnterRunning = sem_open("ThreadD_Sem4EnterRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(PalletObj.pSem4EnterRunning, nullptr);
+    PalletObj.pSem4LeaveRunning = sem_open("ThreadD_Sem4LeaveRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(PalletObj.pSem4LeaveRunning, nullptr);
+    PalletObj.pSem4ExitState = sem_open("ThreadD_Sem4ExitState", O_CREAT, 0644, 0);
+    ASSERT_NE(PalletObj.pSem4ExitState, nullptr);
+
+    CDObj.pSem4ReadyState = sem_open("ThreadE_Sem4ReadyState", O_CREAT, 0644, 0);
+    ASSERT_NE(CDObj.pSem4ReadyState, nullptr);
+    CDObj.pSem4EnterRunning = sem_open("ThreadE_Sem4EnterRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(CDObj.pSem4EnterRunning, nullptr);
+    CDObj.pSem4LeaveRunning = sem_open("ThreadE_Sem4LeaveRunning", O_CREAT, 0644, 0);
+    ASSERT_NE(CDObj.pSem4LeaveRunning, nullptr);
+    CDObj.pSem4ExitState = sem_open("ThreadE_Sem4ExitState", O_CREAT, 0644, 0);
+    ASSERT_NE(CDObj.pSem4ExitState, nullptr);
+    
+    //-----------------------------------------------------------------------------------------------------------------
+    //MAIN startup ThreadA/B/C/D/E
+    int RetPSX = pthread_create(&VMainObj.ThreadID, NULL, __UT_ThreadA_ofVMainObj, &VMainObj);
+    ASSERT_EQ(RetPSX, 0);
+
+    RetPSX = pthread_create(&RCAgentObj.ThreadID, NULL, __UT_ThreadB_ofRCAgentObj, &RCAgentObj);
+    ASSERT_EQ(RetPSX, 0);
+
+    RetPSX = pthread_create(&ChassicObj.ThreadID, NULL, __UT_ThreadC_ofChassicObj, &ChassicObj);
+    ASSERT_EQ(RetPSX, 0);
+
+    RetPSX = pthread_create(&PalletObj.ThreadID, NULL, __UT_ThreadD_ofPalletObj, &PalletObj);
+    ASSERT_EQ(RetPSX, 0);
+
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //MAIN wait for ThreadA/B/C/D/E to be ReadyState
+    sem_wait(VMainObj.pSem4ReadyState);
+    sem_wait(RCAgentObj.pSem4ReadyState);
+    sem_wait(ChassicObj.pSem4ReadyState);
+    sem_wait(PalletObj.pSem4ReadyState);
+    sem_wait(CDObj.pSem4ReadyState);
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //enableEvtManger and MAIN notify ThreadA/B/C/D/E to enter RunningState
+    TOS_Result_T Result = PLT_EVT_enableEvtManger();
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    sem_post(VMainObj.pSem4EnterRunning);
+    sem_post(RCAgentObj.pSem4EnterRunning);
+    sem_post(ChassicObj.pSem4EnterRunning);
+    sem_post(PalletObj.pSem4EnterRunning);
+    sem_post(CDObj.pSem4EnterRunning);
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //MAIN wait for ThreadA/B/C/D/E to be LeaveRunningState and disableEvtManger
+    sem_wait(VMainObj.pSem4LeaveRunning);
+    sem_wait(RCAgentObj.pSem4LeaveRunning);
+    sem_wait(ChassicObj.pSem4LeaveRunning);
+    sem_wait(PalletObj.pSem4LeaveRunning);
+    sem_wait(CDObj.pSem4LeaveRunning);
+
+    PLT_EVT_disableEvtManger();
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //MAIN notify ThreadA/B/C/D/E to exit
+    sem_post(VMainObj.pSem4ExitState);
+    sem_post(RCAgentObj.pSem4ExitState);
+    sem_post(ChassicObj.pSem4ExitState);
+    sem_post(PalletObj.pSem4ExitState);
+    sem_post(CDObj.pSem4ExitState);
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //MAIN wait for ThreadA/B/C/D/E to be exited
+    RetPSX = pthread_join(VMainObj.ThreadID, NULL);
+    ASSERT_EQ(RetPSX, 0);
+
+    RetPSX = pthread_join(RCAgentObj.ThreadID, NULL);
+    ASSERT_EQ(RetPSX, 0);
+
+    RetPSX = pthread_join(ChassicObj.ThreadID, NULL);
+    ASSERT_EQ(RetPSX, 0);
+
+    RetPSX = pthread_join(PalletObj.ThreadID, NULL);
+    ASSERT_EQ(RetPSX, 0);
+
+    RetPSX = pthread_join(CDObj.ThreadID, NULL);
+    ASSERT_EQ(RetPSX, 0);
+
 }
 
 
