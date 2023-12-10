@@ -29,8 +29,8 @@ typedef unsigned long TOS_EvtOperID_T;//MAKE_SURE::sizeof(unsigned long)==sizeof
 #define TOS_EVTOPERID_INVALID 0xFFFFFFFFUL
 
 typedef struct {
-    TOS_ModObjID_T FromModObjID;
-    TOS_ModObjID_T ToModObjID;
+    TOS_EvtOperID_T EvtPuberID;
+    //TOS_EvtOperID_T EvtSuberID;
 
     TOS_EvtID_T    EvtID;//RefMore: TOS_EVTID_*_*_* which made by TOS_MAKE_EVTID in PlatIF_EventID.h
     TOS_EvtFlags_T EvtFlags;//DEFAULT is '0' and it always is ENOUGH; RefMore: TOS_EVTFLAG_*_*_* in PlatIF_EventFlags.h

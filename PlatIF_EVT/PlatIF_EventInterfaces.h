@@ -123,10 +123,9 @@ TOS_Result_T PLT_EVT_enableEvtManger(void);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Helpers:
-#define TOS_EVT_defineEvtDesc(_EvtDescName, _EvtID) \
-    TOS_EvtDesc_T _EvtDescName = { \
-        .ToModObjID   = TOS_MODOBJID_EVTSUBERS, \
-        .EvtID        = _EvtID, \
+#define TOS_EVT_defineEvtDesc(_EvtDescName, _EvtID)     \
+    TOS_EvtDesc_T _EvtDescName = {                      \
+        .EvtID        = _EvtID,                         \
     }
 
 //TOS_EVT_[alloc,free]EvtDesc

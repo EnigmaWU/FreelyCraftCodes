@@ -351,6 +351,7 @@ TOS_Result_T __PLT_EVT_doPostEvtSRT
         return TOS_RESULT_TOO_MANY_PUBED_EVENTS;
     }
 
+    pEvtDesc->EvtPuberID = EvtPuberID;
     pEvtDesc->SeqID = pEvtQueue->SeqID++;
 
     pEvtQueue->EvtDescQueue[pEvtQueue->CurEvtTail] = *pEvtDesc;
