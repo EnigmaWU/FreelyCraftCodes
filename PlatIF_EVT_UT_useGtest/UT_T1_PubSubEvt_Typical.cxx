@@ -637,6 +637,19 @@ typedef struct
     sem_t       *pSem4EnterRunning;//ModObj wait MAIN to post Sem4EnterRunning to notify ModObj to enter RunningStage.
     sem_t       *pSem4LeaveRunning;//ModObj post Sem4LeaveRunning to notify MAIN that ModObj is leaving RunningStage.
     sem_t       *pSem4ExitState;   //ModObj wait MAIN to post Sem4ExitState to notify ModObj to exit.
+
+    union
+    {
+        struct
+        {
+            long Rzvd;
+        } VMainObj;
+
+        struct
+        {
+            TOS_EvtOperID_T EvtPuberID;
+        } RCAgentPriv;
+    };
 } _UT_CtxThreadABCDE_ModObj_T, *_UT_CtxThreadABCDE_ModObj_pT;
 
 typedef struct 
@@ -749,6 +762,80 @@ static void* __UT_ThreadA_ofVMainObj( void* arg )
 
 //---------------------------------------------------------------------------------------------------------------------
 //RCAgentObj in ThreadB(RefMore: [Case04]:UT_B(as RemogeControlAgentObj a.k.a RCAgentObj)@Thread_B
+typedef struct 
+{
+    TOS_EvtOperID_T EvtSuberID; 
+    unsigned long KeepAliveTotalCnt;
+    unsigned long CmdX1TotalCnt;
+    unsigned long CmdX2TotalCnt;
+    unsigned long MsgDataProcedCnt;
+
+    sem_t *pSemAllProced;
+} _UT_EvtSuberPrivCase04_ofB_T, *_UT_EvtSuberPrivCase04_ofB_pT;
+
+static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofB
+    (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
+{
+    _UT_EvtSuberPrivCase04_ofB_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase04_ofB_pT)pToEvtSuberPriv;
+    EXPECT_EQ(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+
+    TOS_EvtID_T EvtID = pEvtDesc->EvtID;
+    EXPECT_TRUE( EvtID == TOS_EVTID_TEST_MSGDATA );//CheckPoint
+
+    if( EvtID == TOS_EVTID_TEST_MSGDATA )
+    {
+        pEvtSuberPriv->MsgDataProcedCnt++;
+    }
+
+    if( pEvtSuberPriv->MsgDataProcedCnt == _UT_MSGDATA_EVT_CNT )
+    {
+        sem_post(pEvtSuberPriv->pSemAllProced);
+    }
+    return TOS_RESULT_SUCCESS;
+}
+
+static void* __UT_ThreadB_ofRCAgentObj_postEvtCmdX1( void* arg )
+{
+    TOS_Result_T Result = TOS_RESULT_BUG;
+    _UT_CtxThreadABCDE_ModObj_pT pRCAgentObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
+    EXPECT_NE(pRCAgentObj, nullptr);
+
+    TOS_EvtOperID_T EvtPuberID = pRCAgentObj->RCAgentPriv.EvtPuberID;
+    EXPECT_NE(EvtPuberID, TOS_EVTOPERID_INVALID);//CheckPoint
+
+    for( int EvtCnt=0; EvtCnt<_UT_CMD_X1_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestCmdX1Evt,TOS_EVTID_TEST_CMD_X1);
+
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestCmdX1Evt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+    return NULL;
+}
+
+static void* __UT_ThreadB_ofRCAgentObj_postEvtCmdX2( void* arg )
+{
+    TOS_Result_T Result = TOS_RESULT_BUG;
+    _UT_CtxThreadABCDE_ModObj_pT pRCAgentObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
+    EXPECT_NE(pRCAgentObj, nullptr);
+
+    TOS_EvtOperID_T EvtPuberID = pRCAgentObj->RCAgentPriv.EvtPuberID;
+    EXPECT_NE(EvtPuberID, TOS_EVTOPERID_INVALID);//CheckPoint
+
+    for( int EvtCnt=0; EvtCnt<_UT_CMD_X2_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestCmdX2Evt,TOS_EVTID_TEST_CMD_X2);
+
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestCmdX2Evt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+    return NULL;
+}
+
 static void* __UT_ThreadB_ofRCAgentObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
@@ -757,10 +844,78 @@ static void* __UT_ThreadB_ofRCAgentObj( void* arg )
 
     //-----------------------------------------------------------------------------------------------------------------
     //RCAgentObj in ThreadB do some initialization work:
-    //  1. regEvtOper as EvtPuberB and EvtSuberB
-    //  2. pubEvts(TOS_EVTID_TEST_CMD_X[1-4]_ACK) with EvtPuberB
-    //  3. subEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtSuberB
+    //  1. regEvtOper as EvtOperB
+    //  2. pubEvts(TOS_EVTID_TEST_CMD_X[1,2]) with EvtOperB as EvtPuber
+    //  3. pubEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtOperB as EvtPuber
+    //  4. subEvts(TOS_EVTID_TEST_MSGDATA) with EvtOperB as EvtSuber
 
+    //===> EvtOperB
+    TOS_EvtOperID_T EvtOperB      = TOS_EVTOPERID_INVALID;
+    TOS_EvtOperArgs_T EvtOperArgs = { .ModObjID = TOS_MODOBJID_UT_B };
+    Result = PLT_EVT_regOper(&EvtOperB, &EvtOperArgs);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    pRCAgentObj->RCAgentPriv.EvtPuberID = EvtOperB;
+
+    TOS_EvtID_T PubEvtIDs_ofB[] = {TOS_EVTID_TEST_CMD_X1, TOS_EVTID_TEST_CMD_X2, TOS_EVTID_TEST_KEEPALIVE};
+    Result = PLT_EVT_pubEvts(EvtOperB, PubEvtIDs_ofB, TOS_calcArrayElmtCnt(PubEvtIDs_ofB));
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtID_T SubEvtIDs_ofB[] = {TOS_EVTID_TEST_MSGDATA};
+
+    _UT_EvtSuberPrivCase04_ofB_T EvtSuberPrivB = { .EvtSuberID = EvtOperB, .KeepAliveTotalCnt = _UT_KEEPALIVE_EVT_CNT, .CmdX1TotalCnt = _UT_CMD_X1_EVT_CNT, .CmdX2TotalCnt = _UT_CMD_X2_EVT_CNT, .MsgDataProcedCnt = 0 };
+    EvtSuberPrivB.pSemAllProced = sem_open("Sem4EvtProcCmpltB", O_CREAT, 0644, 0);
+    EXPECT_NE(EvtSuberPrivB.pSemAllProced, nullptr);
+
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofB, };
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivB;
+
+    Result = PLT_EVT_subEvts(EvtOperB, SubEvtIDs_ofB, TOS_calcArrayElmtCnt(SubEvtIDs_ofB), NULL);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //-----------------------------------------------------------------------------------------------------------------
+    sem_post(pRCAgentObj->pSem4ReadyState);//Notify MAIN that RCAgentObj is in ReadyStage.
+    sem_wait(pRCAgentObj->pSem4EnterRunning);//Wait for MAIN to notify RCAgentObj to enter RunningStage.
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //Startup ThreadB_ofRCAgentObj_CmdX1
+    pthread_t ThreadB_ofRCAgentObj_CmdX1;
+    int RetPSX = pthread_create(&ThreadB_ofRCAgentObj_CmdX1, NULL, __UT_ThreadB_ofRCAgentObj_postEvtCmdX1, pRCAgentObj);
+    EXPECT_EQ(RetPSX, 0);//CheckPoint
+
+    //Startup ThreadB_ofRCAgentObj_CmdX2
+    pthread_t ThreadB_ofRCAgentObj_CmdX2;
+    RetPSX = pthread_create(&ThreadB_ofRCAgentObj_CmdX2, NULL, __UT_ThreadB_ofRCAgentObj_postEvtCmdX2, pRCAgentObj);
+    EXPECT_EQ(RetPSX, 0);//CheckPoint
+    
+    //-----------------------------------------------------------------------------------------------------------------
+    for( int EvtCnt=0; EvtCnt<_UT_KEEPALIVE_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestKeepAliveEvt,TOS_EVTID_TEST_KEEPALIVE);
+
+        Result = PLT_EVT_postEvtSRT(EvtOperB, &MyTestKeepAliveEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+
+    //Wait for EvtSuberPrivB.MsgDataProcedCnt==_UT_MSGDATA_EVT_CNT
+    sem_wait(EvtSuberPrivB.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivB.MsgDataProcedCnt, _UT_MSGDATA_EVT_CNT);
+
+    //Wait for ThreadB_ofRCAgentObj_CmdX1/X2 to exit
+    pthread_join(ThreadB_ofRCAgentObj_CmdX1, NULL);
+    pthread_join(ThreadB_ofRCAgentObj_CmdX2, NULL);
+
+    //-----------------------------------------------------------------------------------------------------------------
+    sem_wait(pRCAgentObj->pSem4LeaveRunning);//Wait for MAIN to notify RCAgentObj to leave RunningStage.
+
+    //-----------------------------------------------------------------------------------------------------------------
+    PLT_EVT_unpubEvts(EvtOperB);
+    PLT_EVT_unsubEvts(EvtOperB);
+
+    PLT_EVT_unregOper(EvtOperB);
+    return NULL;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
