@@ -879,13 +879,13 @@ static void* __UT_ThreadB_ofRCAgentObj( void* arg )
 
     //-----------------------------------------------------------------------------------------------------------------
     //Startup ThreadB_ofRCAgentObj_CmdX1
-    pthread_t ThreadB_ofRCAgentObj_CmdX1;
-    int RetPSX = pthread_create(&ThreadB_ofRCAgentObj_CmdX1, NULL, __UT_ThreadB_ofRCAgentObj_postEvtCmdX1, pRCAgentObj);
+    pthread_t ThreadID_postEvtCmdX1;
+    int RetPSX = pthread_create(&ThreadID_postEvtCmdX1, NULL, __UT_ThreadB_ofRCAgentObj_postEvtCmdX1, pRCAgentObj);
     EXPECT_EQ(RetPSX, 0);//CheckPoint
 
     //Startup ThreadB_ofRCAgentObj_CmdX2
-    pthread_t ThreadB_ofRCAgentObj_CmdX2;
-    RetPSX = pthread_create(&ThreadB_ofRCAgentObj_CmdX2, NULL, __UT_ThreadB_ofRCAgentObj_postEvtCmdX2, pRCAgentObj);
+    pthread_t ThreadID_postEvtCmdX2;
+    RetPSX = pthread_create(&ThreadID_postEvtCmdX2, NULL, __UT_ThreadB_ofRCAgentObj_postEvtCmdX2, pRCAgentObj);
     EXPECT_EQ(RetPSX, 0);//CheckPoint
     
     //-----------------------------------------------------------------------------------------------------------------
@@ -904,8 +904,8 @@ static void* __UT_ThreadB_ofRCAgentObj( void* arg )
     EXPECT_EQ(EvtSuberPrivB.MsgDataProcedCnt, _UT_MSGDATA_EVT_CNT);
 
     //Wait for ThreadB_ofRCAgentObj_CmdX1/X2 to exit
-    pthread_join(ThreadB_ofRCAgentObj_CmdX1, NULL);
-    pthread_join(ThreadB_ofRCAgentObj_CmdX2, NULL);
+    pthread_join(ThreadID_postEvtCmdX1, NULL);
+    pthread_join(ThreadID_postEvtCmdX2, NULL);
 
     //-----------------------------------------------------------------------------------------------------------------
     sem_wait(pRCAgentObj->pSem4LeaveRunning);//Wait for MAIN to notify RCAgentObj to leave RunningStage.
