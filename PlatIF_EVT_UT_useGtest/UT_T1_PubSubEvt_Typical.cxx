@@ -878,7 +878,7 @@ static void* __UT_ThreadB_ofRCAgentObj( void* arg )
     TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofB, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivB;
 
-    Result = PLT_EVT_subEvts(EvtSuberID, SubEvtIDs_ofB, TOS_calcArrayElmtCnt(SubEvtIDs_ofB), NULL);
+    Result = PLT_EVT_subEvts(EvtSuberID, SubEvtIDs_ofB, TOS_calcArrayElmtCnt(SubEvtIDs_ofB), &EvtSubArgs);
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     //-----------------------------------------------------------------------------------------------------------------
@@ -1030,11 +1030,11 @@ static void* __UT_ThreadC_ofChassicObj( void* arg )
     sem_wait(pChassicObj->pSem4EnterRunning);//Wait for MAIN to notify ChassicObj to enter RunningStage.
 
     //-----------------------------------------------------------------------------------------------------------------
-    for( int EvtCnt=0; EvtCnt<_UT_MSGDATA_EVT_CNT; EvtCnt++ )
+    for( int EvtCnt=0; EvtCnt<_UT_KEEPALIVE_EVT_CNT; EvtCnt++ )
     {
-        TOS_EVT_defineEvtDesc(MyTestMsgDataEvt,TOS_EVTID_TEST_MSGDATA);
+        TOS_EVT_defineEvtDesc(MyTestKeepAliveEvt,TOS_EVTID_TEST_KEEPALIVE);
 
-        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestMsgDataEvt);
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestKeepAliveEvt);
         EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
         usleep(1000);
@@ -1162,11 +1162,11 @@ static void* __UT_ThreadD_ofPalletObj( void* arg )
     sem_wait(pPalletObj->pSem4EnterRunning);//Wait for MAIN to notify PalletObj to enter RunningStage.
 
     //-----------------------------------------------------------------------------------------------------------------
-    for( int EvtCnt=0; EvtCnt<_UT_MSGDATA_EVT_CNT; EvtCnt++ )
+    for( int EvtCnt=0; EvtCnt<_UT_KEEPALIVE_EVT_CNT; EvtCnt++ )
     {
-        TOS_EVT_defineEvtDesc(MyTestMsgDataEvt,TOS_EVTID_TEST_MSGDATA);
+        TOS_EVT_defineEvtDesc(MyTestKeepAliveEvt,TOS_EVTID_TEST_KEEPALIVE);
 
-        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestMsgDataEvt);
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestKeepAliveEvt);
         EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
         usleep(1000);
@@ -1419,6 +1419,9 @@ TEST(UT_T1_PubSubEvt_Typical, Case04)
     ASSERT_EQ(RetPSX, 0);
 
     RetPSX = pthread_create(&PalletObj.ThreadID, NULL, __UT_ThreadD_ofPalletObj, &PalletObj);
+    ASSERT_EQ(RetPSX, 0);
+
+    RetPSX = pthread_create(&CDObj.ThreadID, NULL, __UT_ThreadE_ofCDObj, &CDObj);
     ASSERT_EQ(RetPSX, 0);
 
 
