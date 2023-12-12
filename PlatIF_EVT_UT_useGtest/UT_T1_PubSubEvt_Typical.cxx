@@ -649,6 +649,11 @@ typedef struct
         {
             TOS_EvtOperID_T EvtPuberID;
         } RCAgentPriv;
+
+        struct 
+        {
+            TOS_EvtOperID_T EvtPuberID;
+        } CDObjPriv;
     };
 } _UT_CtxThreadABCDE_ModObj_T, *_UT_CtxThreadABCDE_ModObj_pT;
 
@@ -855,22 +860,25 @@ static void* __UT_ThreadB_ofRCAgentObj( void* arg )
     Result = PLT_EVT_regOper(&EvtOperB, &EvtOperArgs);
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
+    TOS_EvtOperID_T EvtPuberID = EvtOperB;
+    TOS_EvtOperID_T EvtSuberID = EvtOperB;
+
     pRCAgentObj->RCAgentPriv.EvtPuberID = EvtOperB;
 
     TOS_EvtID_T PubEvtIDs_ofB[] = {TOS_EVTID_TEST_CMD_X1, TOS_EVTID_TEST_CMD_X2, TOS_EVTID_TEST_KEEPALIVE};
-    Result = PLT_EVT_pubEvts(EvtOperB, PubEvtIDs_ofB, TOS_calcArrayElmtCnt(PubEvtIDs_ofB));
+    Result = PLT_EVT_pubEvts(EvtPuberID, PubEvtIDs_ofB, TOS_calcArrayElmtCnt(PubEvtIDs_ofB));
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     TOS_EvtID_T SubEvtIDs_ofB[] = {TOS_EVTID_TEST_MSGDATA};
 
-    _UT_EvtSuberPrivCase04_ofB_T EvtSuberPrivB = { .EvtSuberID = EvtOperB, .KeepAliveTotalCnt = _UT_KEEPALIVE_EVT_CNT, .CmdX1TotalCnt = _UT_CMD_X1_EVT_CNT, .CmdX2TotalCnt = _UT_CMD_X2_EVT_CNT, .MsgDataProcedCnt = 0 };
+    _UT_EvtSuberPrivCase04_ofB_T EvtSuberPrivB = { .EvtSuberID = EvtSuberID, .KeepAliveTotalCnt = _UT_KEEPALIVE_EVT_CNT, .CmdX1TotalCnt = _UT_CMD_X1_EVT_CNT, .CmdX2TotalCnt = _UT_CMD_X2_EVT_CNT, .MsgDataProcedCnt = 0 };
     EvtSuberPrivB.pSemAllProced = sem_open("Sem4EvtProcCmpltB", O_CREAT, 0644, 0);
     EXPECT_NE(EvtSuberPrivB.pSemAllProced, nullptr);
 
     TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofB, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivB;
 
-    Result = PLT_EVT_subEvts(EvtOperB, SubEvtIDs_ofB, TOS_calcArrayElmtCnt(SubEvtIDs_ofB), NULL);
+    Result = PLT_EVT_subEvts(EvtSuberID, SubEvtIDs_ofB, TOS_calcArrayElmtCnt(SubEvtIDs_ofB), NULL);
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     //-----------------------------------------------------------------------------------------------------------------
@@ -893,7 +901,7 @@ static void* __UT_ThreadB_ofRCAgentObj( void* arg )
     {
         TOS_EVT_defineEvtDesc(MyTestKeepAliveEvt,TOS_EVTID_TEST_KEEPALIVE);
 
-        Result = PLT_EVT_postEvtSRT(EvtOperB, &MyTestKeepAliveEvt);
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestKeepAliveEvt);
         EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
         usleep(1000);
@@ -920,6 +928,61 @@ static void* __UT_ThreadB_ofRCAgentObj( void* arg )
 
 //---------------------------------------------------------------------------------------------------------------------
 //ChassicObj in ThreadC(RefMore: [Case04]:UT_C(as ChassicObj)@Thread_C
+typedef struct 
+{
+    TOS_EvtOperID_T EvtSuberID; 
+
+    unsigned long CmdX1TotalCnt;
+    unsigned long CmdX1ProcedCnt;
+
+    unsigned long CmdX3TotalCnt;
+    unsigned long CmdX3ProcedCnt;
+
+    unsigned long MsgDataTotalCnt;
+    unsigned long MsgDataProcedCnt;
+
+    sem_t *pSemAllProced;
+} _UT_EvtSuberPrivCase04_ofC_T, *_UT_EvtSuberPrivCase04_ofC_pT;
+
+static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofC
+    (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
+{
+    _UT_EvtSuberPrivCase04_ofC_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase04_ofC_pT)pToEvtSuberPriv;
+    EXPECT_EQ(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+
+    TOS_EvtID_T EvtID = pEvtDesc->EvtID;
+    EXPECT_TRUE( (EvtID == TOS_EVTID_TEST_CMD_X1) || (EvtID == TOS_EVTID_TEST_CMD_X3) || (EvtID == TOS_EVTID_TEST_MSGDATA) );//CheckPoint
+
+    if( EvtID == TOS_EVTID_TEST_CMD_X1 )
+    {
+        pEvtSuberPriv->CmdX1ProcedCnt++;
+
+        TOS_EVT_defineEvtDesc(MyTestCmdX1AckEvt,TOS_EVTID_TEST_CMD_X1_ACK);
+        TOS_Result_T Result = PLT_EVT_postEvtSRT(pEvtSuberPriv->EvtSuberID, &MyTestCmdX1AckEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+    }
+    else if( EvtID == TOS_EVTID_TEST_CMD_X3 )
+    {
+        pEvtSuberPriv->CmdX3ProcedCnt++;
+
+        TOS_EVT_defineEvtDesc(MyTestCmdX3AckEvt,TOS_EVTID_TEST_CMD_X3_ACK);
+        TOS_Result_T Result = PLT_EVT_postEvtSRT(pEvtSuberPriv->EvtSuberID, &MyTestCmdX3AckEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+    }
+    else if( EvtID == TOS_EVTID_TEST_MSGDATA )
+    {
+        pEvtSuberPriv->MsgDataProcedCnt++;
+    }
+
+    if( (pEvtSuberPriv->CmdX1ProcedCnt == pEvtSuberPriv->CmdX1TotalCnt) 
+        && (pEvtSuberPriv->CmdX3ProcedCnt == pEvtSuberPriv->CmdX3TotalCnt)
+        && (pEvtSuberPriv->MsgDataProcedCnt == pEvtSuberPriv->MsgDataTotalCnt) )
+    {
+        sem_post(pEvtSuberPriv->pSemAllProced);
+    }
+    return TOS_RESULT_SUCCESS;
+}
+
 static void* __UT_ThreadC_ofChassicObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
@@ -928,14 +991,130 @@ static void* __UT_ThreadC_ofChassicObj( void* arg )
 
     //-----------------------------------------------------------------------------------------------------------------
     //ChassicObj in ThreadC do some initialization work:
-    //  1. regEvtOper as EvtPuberC and EvtSuberC
-    //  2. pubEvts(TOS_EVTID_TEST_CMD_X[1-4]_ACK) with EvtPuberC
-    //  3. subEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtSuberC
+    //  1. regEvtOper as EvtOperC, alias as EvtPuberC and EvtSuberC
+    //  2. subEvts(TOS_EVTID_TEST_CMD_X1/_X3) with EvtSuberC
+    //  3. pubEvts(TOS_EVTID_TEST_CMD_X1_ACK/_X3_ACK) with EvtPuberC 
+    //      and postEvt in CbProcEvtSRT_F of TOS_EVTID_TEST_CMD_X1/_X3
+    //  4. pubEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtPuberC
+    //  5. subEvts(TOS_EVTID_TEST_MSGDATA) with EvtSuberC
 
+    //===> EvtOperC
+    TOS_EvtOperID_T EvtOperC      = TOS_EVTOPERID_INVALID;
+    TOS_EvtOperArgs_T EvtOperArgs = { .ModObjID = TOS_MODOBJID_UT_C };
+    Result = PLT_EVT_regOper(&EvtOperC, &EvtOperArgs);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtOperID_T EvtPuberID = EvtOperC;
+    TOS_EvtOperID_T EvtSuberID = EvtOperC;
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //===> EvtPuberC
+    TOS_EvtID_T PubEvtIDs_ofC[] = {TOS_EVTID_TEST_CMD_X1_ACK, TOS_EVTID_TEST_CMD_X3_ACK, TOS_EVTID_TEST_KEEPALIVE};
+    Result = PLT_EVT_pubEvts(EvtPuberID, PubEvtIDs_ofC, TOS_calcArrayElmtCnt(PubEvtIDs_ofC));
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //===> EvtSuberC
+    _UT_EvtSuberPrivCase04_ofC_T EvtSuberPrivC = { .EvtSuberID = EvtSuberID, .CmdX1TotalCnt = _UT_CMD_X1_EVT_CNT, .CmdX1ProcedCnt = 0, .CmdX3TotalCnt = _UT_CMD_X3_EVT_CNT, .CmdX3ProcedCnt = 0, .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
+    EvtSuberPrivC.pSemAllProced = sem_open("Sem4EvtProcCmpltC", O_CREAT, 0644, 0);
+    EXPECT_NE(EvtSuberPrivC.pSemAllProced, nullptr);
+    
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofC, };
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivC;
+
+    TOS_EvtID_T SubEvtIDs_ofC[] = {TOS_EVTID_TEST_CMD_X1, TOS_EVTID_TEST_CMD_X3, TOS_EVTID_TEST_MSGDATA};
+    Result = PLT_EVT_subEvts(EvtSuberID, SubEvtIDs_ofC, TOS_calcArrayElmtCnt(SubEvtIDs_ofC), &EvtSubArgs);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //-----------------------------------------------------------------------------------------------------------------
+    sem_post(pChassicObj->pSem4ReadyState);//Notify MAIN that ChassicObj is in ReadyStage.
+    sem_wait(pChassicObj->pSem4EnterRunning);//Wait for MAIN to notify ChassicObj to enter RunningStage.
+
+    //-----------------------------------------------------------------------------------------------------------------
+    for( int EvtCnt=0; EvtCnt<_UT_MSGDATA_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestMsgDataEvt,TOS_EVTID_TEST_MSGDATA);
+
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestMsgDataEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+
+    //Wait for EvtSuberPrivC.MsgDataProcedCnt==_UT_MSGDATA_EVT_CNT && CmdX1ProcedCnt==_UT_CMD_X1_EVT_CNT && CmdX3ProcedCnt==_UT_CMD_X3_EVT_CNT
+    sem_wait(EvtSuberPrivC.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivC.MsgDataProcedCnt, _UT_MSGDATA_EVT_CNT);
+    EXPECT_EQ(EvtSuberPrivC.CmdX1ProcedCnt, _UT_CMD_X1_EVT_CNT);
+    EXPECT_EQ(EvtSuberPrivC.CmdX3ProcedCnt, _UT_CMD_X3_EVT_CNT);
+
+    //-----------------------------------------------------------------------------------------------------------------
+    sem_post(pChassicObj->pSem4LeaveRunning);//Notify MAIN that ChassicObj is leaving RunningStage.
+    sem_wait(pChassicObj->pSem4ExitState);//Wait for MAIN to notify ChassicObj to exit.
+
+    //-----------------------------------------------------------------------------------------------------------------
+    PLT_EVT_unpubEvts(EvtPuberID);
+    PLT_EVT_unsubEvts(EvtSuberID);
+
+    PLT_EVT_unregOper(EvtOperC);
+    return NULL;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 //PalletObj in ThreadD(RefMore: [Case04]:UT_D(as PalletObj)@Thread_D
+typedef struct 
+{
+    TOS_EvtOperID_T EvtSuberID; 
+
+    unsigned long CmdX2TotalCnt;
+    unsigned long CmdX2ProcedCnt;
+
+    unsigned long CmdX4TotalCnt;
+    unsigned long CmdX4ProcedCnt;
+
+    unsigned long MsgDataTotalCnt;
+    unsigned long MsgDataProcedCnt;
+
+    sem_t *pSemAllProced;
+} _UT_EvtSuberPrivCase04_ofD_T, *_UT_EvtSuberPrivCase04_ofD_pT;
+
+static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofD
+    (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
+{
+    _UT_EvtSuberPrivCase04_ofD_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase04_ofD_pT)pToEvtSuberPriv;
+    EXPECT_EQ(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+
+    TOS_EvtID_T EvtID = pEvtDesc->EvtID;
+    EXPECT_TRUE( (EvtID == TOS_EVTID_TEST_CMD_X2) || (EvtID == TOS_EVTID_TEST_CMD_X4) || (EvtID == TOS_EVTID_TEST_MSGDATA) );//CheckPoint
+
+    if( EvtID == TOS_EVTID_TEST_CMD_X2 )
+    {
+        pEvtSuberPriv->CmdX2ProcedCnt++;
+
+        TOS_EVT_defineEvtDesc(MyTestCmdX2AckEvt,TOS_EVTID_TEST_CMD_X2_ACK);
+        TOS_Result_T Result = PLT_EVT_postEvtSRT(pEvtSuberPriv->EvtSuberID, &MyTestCmdX2AckEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+    }
+    else if( EvtID == TOS_EVTID_TEST_CMD_X4 )
+    {
+        pEvtSuberPriv->CmdX4ProcedCnt++;
+
+        TOS_EVT_defineEvtDesc(MyTestCmdX4AckEvt,TOS_EVTID_TEST_CMD_X4_ACK);
+        TOS_Result_T Result = PLT_EVT_postEvtSRT(pEvtSuberPriv->EvtSuberID, &MyTestCmdX4AckEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+    }
+    else if( EvtID == TOS_EVTID_TEST_MSGDATA )
+    {
+        pEvtSuberPriv->MsgDataProcedCnt++;
+    }
+
+    if( (pEvtSuberPriv->CmdX2ProcedCnt == pEvtSuberPriv->CmdX2TotalCnt) 
+        && (pEvtSuberPriv->CmdX4ProcedCnt == pEvtSuberPriv->CmdX4TotalCnt)
+        && (pEvtSuberPriv->MsgDataProcedCnt == pEvtSuberPriv->MsgDataTotalCnt) )
+    {   
+        sem_post(pEvtSuberPriv->pSemAllProced);
+    }
+    return TOS_RESULT_SUCCESS;
+}
+
 static void* __UT_ThreadD_ofPalletObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
@@ -944,14 +1123,147 @@ static void* __UT_ThreadD_ofPalletObj( void* arg )
 
     //-----------------------------------------------------------------------------------------------------------------
     //PalletObj in ThreadD do some initialization work:
-    //  1. regEvtOper as EvtPuberD and EvtSuberD
-    //  2. pubEvts(TOS_EVTID_TEST_CMD_X[1-4]_ACK) with EvtPuberD
-    //  3. subEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtSuberD
+    //  1. regEvtOper as EvtOperD, alias as EvtPuberD and EvtSuberD
+    //  2. subEvts(TOS_EVTID_TEST_CMD_X2/_X4) with EvtSuberD
+    //  3. pubEvts(TOS_EVTID_TEST_CMD_X2_ACK/_X4_ACK) with EvtPuberD
+    //      and postEvt in CbProcEvtSRT_F of TOS_EVTID_TEST_CMD_X2/_X4
+    //  4. pubEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtPuberD
+    //  5. subEvts(TOS_EVTID_TEST_MSGDATA) with EvtSuberD
 
+    //===> EvtOperD
+    TOS_EvtOperID_T EvtOperD      = TOS_EVTOPERID_INVALID;
+    TOS_EvtOperArgs_T EvtOperArgs = { .ModObjID = TOS_MODOBJID_UT_D };
+    Result = PLT_EVT_regOper(&EvtOperD, &EvtOperArgs);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtOperID_T EvtPuberID = EvtOperD;
+    TOS_EvtOperID_T EvtSuberID = EvtOperD;
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //===> EvtPuberD
+    TOS_EvtID_T PubEvtIDs_ofD[] = {TOS_EVTID_TEST_CMD_X2_ACK, TOS_EVTID_TEST_CMD_X4_ACK, TOS_EVTID_TEST_KEEPALIVE};
+    Result = PLT_EVT_pubEvts(EvtPuberID, PubEvtIDs_ofD, TOS_calcArrayElmtCnt(PubEvtIDs_ofD));
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //===> EvtSuberD
+    _UT_EvtSuberPrivCase04_ofD_T EvtSuberPrivD = { .EvtSuberID = EvtSuberID, .CmdX2TotalCnt = _UT_CMD_X2_EVT_CNT, .CmdX2ProcedCnt = 0, .CmdX4TotalCnt = _UT_CMD_X4_EVT_CNT, .CmdX4ProcedCnt = 0, .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
+    EvtSuberPrivD.pSemAllProced = sem_open("Sem4EvtProcCmpltD", O_CREAT, 0644, 0);
+    EXPECT_NE(EvtSuberPrivD.pSemAllProced, nullptr);
+
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofD, };
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivD;
+
+    TOS_EvtID_T SubEvtIDs_ofD[] = {TOS_EVTID_TEST_CMD_X2, TOS_EVTID_TEST_CMD_X4, TOS_EVTID_TEST_MSGDATA};
+    Result = PLT_EVT_subEvts(EvtSuberID, SubEvtIDs_ofD, TOS_calcArrayElmtCnt(SubEvtIDs_ofD), &EvtSubArgs);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //-----------------------------------------------------------------------------------------------------------------
+    sem_post(pPalletObj->pSem4ReadyState);//Notify MAIN that PalletObj is in ReadyStage.
+    sem_wait(pPalletObj->pSem4EnterRunning);//Wait for MAIN to notify PalletObj to enter RunningStage.
+
+    //-----------------------------------------------------------------------------------------------------------------
+    for( int EvtCnt=0; EvtCnt<_UT_MSGDATA_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestMsgDataEvt,TOS_EVTID_TEST_MSGDATA);
+
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestMsgDataEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+
+    //Wait for EvtSuberPrivD.MsgDataProcedCnt==_UT_MSGDATA_EVT_CNT && CmdX2ProcedCnt==_UT_CMD_X2_EVT_CNT && CmdX4ProcedCnt==_UT_CMD_X4_EVT_CNT
+    sem_wait(EvtSuberPrivD.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivD.MsgDataProcedCnt, _UT_MSGDATA_EVT_CNT);
+    EXPECT_EQ(EvtSuberPrivD.CmdX2ProcedCnt, _UT_CMD_X2_EVT_CNT);
+    EXPECT_EQ(EvtSuberPrivD.CmdX4ProcedCnt, _UT_CMD_X4_EVT_CNT);
+
+    //-----------------------------------------------------------------------------------------------------------------
+    sem_post(pPalletObj->pSem4LeaveRunning);//Notify MAIN that PalletObj is leaving RunningStage.
+    sem_wait(pPalletObj->pSem4ExitState);//Wait for MAIN to notify PalletObj to exit.
+
+    //-----------------------------------------------------------------------------------------------------------------
+    PLT_EVT_unpubEvts(EvtPuberID);
+    PLT_EVT_unsubEvts(EvtSuberID);
+
+    PLT_EVT_unregOper(EvtOperD);
+    return NULL;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
 //CDObj in ThreadE(RefMore: [Case04]:UT_E(as CollisionDetectorObj)@Thread_E
+static void* __UT_ThreadE_ofCDObj_postEvtCmdX3( void* arg )
+{
+    TOS_Result_T Result = TOS_RESULT_BUG;
+    _UT_CtxThreadABCDE_ModObj_pT pCDObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
+    EXPECT_NE(pCDObj, nullptr);
+
+    TOS_EvtOperID_T EvtPuberID = pCDObj->CDObjPriv.EvtPuberID;
+    EXPECT_NE(EvtPuberID, TOS_EVTOPERID_INVALID);//CheckPoint
+
+    for( int EvtCnt=0; EvtCnt<_UT_CMD_X3_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestCmdX3Evt,TOS_EVTID_TEST_CMD_X3);
+
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestCmdX3Evt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+    return NULL;
+}
+
+static void* __UT_ThreadE_ofCDObj_postEvtCmdX4( void* arg )
+{
+    TOS_Result_T Result = TOS_RESULT_BUG;
+    _UT_CtxThreadABCDE_ModObj_pT pCDObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
+    EXPECT_NE(pCDObj, nullptr);
+
+    TOS_EvtOperID_T EvtPuberID = pCDObj->CDObjPriv.EvtPuberID;
+    EXPECT_NE(EvtPuberID, TOS_EVTOPERID_INVALID);//CheckPoint
+
+    for( int EvtCnt=0; EvtCnt<_UT_CMD_X4_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestCmdX4Evt,TOS_EVTID_TEST_CMD_X4);
+
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestCmdX4Evt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+    return NULL;
+}
+
+typedef struct 
+{
+    TOS_EvtOperID_T EvtSuberID; 
+    unsigned long MsgDataTotalCnt;
+    unsigned long MsgDataProcedCnt;
+
+    sem_t *pSemAllProced;
+} _UT_EvtSuberPrivCase04_ofE_T, *_UT_EvtSuberPrivCase04_ofE_pT;
+
+static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofE
+    (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
+{
+    _UT_EvtSuberPrivCase04_ofE_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase04_ofE_pT)pToEvtSuberPriv;
+    EXPECT_EQ(EvtSuberID, pEvtSuberPriv->EvtSuberID);//CheckPoint
+
+    TOS_EvtID_T EvtID = pEvtDesc->EvtID;
+    EXPECT_TRUE( EvtID == TOS_EVTID_TEST_MSGDATA );//CheckPoint
+
+    if( EvtID == TOS_EVTID_TEST_MSGDATA )
+    {
+        pEvtSuberPriv->MsgDataProcedCnt++;
+    }
+
+    if( pEvtSuberPriv->MsgDataProcedCnt == pEvtSuberPriv->MsgDataTotalCnt )
+    {
+        sem_post(pEvtSuberPriv->pSemAllProced);
+    }
+    return TOS_RESULT_SUCCESS;
+}
+
 static void* __UT_ThreadE_ofCDObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
@@ -960,10 +1272,85 @@ static void* __UT_ThreadE_ofCDObj( void* arg )
 
     //-----------------------------------------------------------------------------------------------------------------
     //CDObj in ThreadE do some initialization work:
-    //  1. regEvtOper as EvtPuberE and EvtSuberE
-    //  2. pubEvts(TOS_EVTID_TEST_CMD_X[1-4]_ACK) with EvtPuberE
-    //  3. subEvts(TOS_EVTID_TEST_KEEPALIVE) with EvtSuberE
+    //  1. regEvtOper as EvtOperE, alias as EvtPuberE and EvtSuberE
+    //  2. pubEvt(TOS_EVTID_TEST_KEEPALIVE) with EvtPuberE
+    //  3. pubEvt(TOS_EVTID_CMD_X3/_X4) with EvtPuberE
+    //      and postEvt in ThreadE_ofCDObj_postEvtCmdX3/_X4
+    //  4. subEvts(TOS_EVTID_TEST_MSGDATA) with EvtSuberE
 
+    //===> EvtOperE
+    TOS_EvtOperID_T EvtOperE      = TOS_EVTOPERID_INVALID;
+    TOS_EvtOperArgs_T EvtOperArgs = { .ModObjID = TOS_MODOBJID_UT_E };
+    Result = PLT_EVT_regOper(&EvtOperE, &EvtOperArgs);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    TOS_EvtOperID_T EvtPuberID   = EvtOperE;
+    pCDObj->CDObjPriv.EvtPuberID = EvtOperE;
+    TOS_EvtOperID_T EvtSuberID   = EvtOperE;
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //===> EvtPuberE
+    TOS_EvtID_T PubEvtIDs_ofE[] = {TOS_EVTID_TEST_KEEPALIVE, TOS_EVTID_TEST_CMD_X3, TOS_EVTID_TEST_CMD_X4};
+    Result = PLT_EVT_pubEvts(EvtPuberID, PubEvtIDs_ofE, TOS_calcArrayElmtCnt(PubEvtIDs_ofE));
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //===> EvtSuberE
+    _UT_EvtSuberPrivCase04_ofE_T EvtSuberPrivE = { .EvtSuberID = EvtSuberID, .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
+    EvtSuberPrivE.pSemAllProced = sem_open("Sem4EvtProcCmpltE", O_CREAT, 0644, 0);
+    EXPECT_NE(EvtSuberPrivE.pSemAllProced, nullptr);
+
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofE, };
+    EvtSubArgs.ToObjPriv = &EvtSuberPrivE;
+
+    TOS_EvtID_T SubEvtIDs_ofE[] = {TOS_EVTID_TEST_MSGDATA};
+    Result = PLT_EVT_subEvts(EvtSuberID, SubEvtIDs_ofE, TOS_calcArrayElmtCnt(SubEvtIDs_ofE), &EvtSubArgs);
+    EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+    //-----------------------------------------------------------------------------------------------------------------
+    sem_post(pCDObj->pSem4ReadyState);//Notify MAIN that CDObj is in ReadyStage.
+    sem_wait(pCDObj->pSem4EnterRunning);//Wait for MAIN to notify CDObj to enter RunningStage.
+
+    //-----------------------------------------------------------------------------------------------------------------
+    //Startup ThreadE_ofCDObj_postEvtCmdX3
+    pthread_t ThreadID_postEvtCmdX3;
+    int RetPSX = pthread_create(&ThreadID_postEvtCmdX3, NULL, __UT_ThreadE_ofCDObj_postEvtCmdX3, pCDObj);
+    EXPECT_EQ(RetPSX, 0);//CheckPoint
+
+    //Startup ThreadE_ofCDObj_postEvtCmdX4
+    pthread_t ThreadID_postEvtCmdX4;
+    RetPSX = pthread_create(&ThreadID_postEvtCmdX4, NULL, __UT_ThreadE_ofCDObj_postEvtCmdX4, pCDObj);
+    EXPECT_EQ(RetPSX, 0);//CheckPoint
+
+    //-----------------------------------------------------------------------------------------------------------------
+    for( int EvtCnt=0; EvtCnt<_UT_MSGDATA_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestKeepAliveEvt,TOS_EVTID_TEST_KEEPALIVE);
+
+        Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestKeepAliveEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+
+    //Wait for EvtSuberPrivE.MsgDataProcedCnt==_UT_MSGDATA_EVT_CNT
+    sem_wait(EvtSuberPrivE.pSemAllProced);
+    EXPECT_EQ(EvtSuberPrivE.MsgDataProcedCnt, _UT_MSGDATA_EVT_CNT);
+
+    //Wait for ThreadE_ofCDObj_postEvtCmdX3/X4 to exit
+    pthread_join(ThreadID_postEvtCmdX3, NULL);
+    pthread_join(ThreadID_postEvtCmdX4, NULL);
+
+    //-----------------------------------------------------------------------------------------------------------------
+    sem_post(pCDObj->pSem4LeaveRunning);//Notify MAIN that CDObj is leaving RunningStage.
+    sem_wait(pCDObj->pSem4ExitState);//Wait for MAIN to notify CDObj to exit.
+
+    //-----------------------------------------------------------------------------------------------------------------
+    PLT_EVT_unpubEvts(EvtPuberID);
+    PLT_EVT_unsubEvts(EvtSuberID);
+
+    PLT_EVT_unregOper(EvtOperE);
+    return NULL;
 }
 
 //UT_T1_PubSubEvt_Typical_NN=[04] defined in Typical PubSubEvt Case Lists
