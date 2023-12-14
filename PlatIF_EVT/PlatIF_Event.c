@@ -182,8 +182,16 @@ TOS_Result_T PLT_EVT_enableEvtManger(void)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //PSDB = _mEvtPSDB_PubTable + _mEvtPSDB_SubTable
 
+typedef enum 
+{
+    _TOS_RowType_EvtPuber = 1,
+    _TOS_RowType_EvtSuber = 2,
+} _TOS_EvtPBDB_RowType_T;
+
 typedef struct 
 {
+    _TOS_EvtPBDB_RowType_T Type;
+
     union 
     {
         struct 
@@ -227,6 +235,7 @@ static TOS_Result_T __PLT_EVT_doPubEvts
                 _mEvtPSDB_PubTable[row] = pRow;
             }
 
+            pRow->Type       = _TOS_RowType_EvtPuber;
             pRow->NumIDs     = NumIDs;
             pRow->EvtPuberID = EvtPuberID;
             
@@ -297,6 +306,7 @@ TOS_Result_T __PLT_EVT_doSubEvts
                 return TOS_RESULT_NOT_ENOUGH_MEMORY;
             }
 
+            pEvtSuber->Type        = _TOS_RowType_EvtSuber;
             pEvtSuber->EvtPuberID  = EvtSuberID;
             pEvtSuber->pEvtSubArgs = malloc(sizeof(TOS_EvtSubArgs_T));
             if( pEvtSuber->pEvtSubArgs == NULL )
@@ -497,6 +507,7 @@ void PLT_EVT_unsubEvts(/*ARG_IN*/TOS_EvtOperID_T EvtOperID)
     for(uint32_t row = 0; row < _mMaySubEvtNumMax; row++)
     {
         if( _mEvtPSDB_SubTable[row] 
+            && _mEvtPSDB_SubTable[row]->Type == _TOS_RowType_EvtSuber
             && _mEvtPSDB_SubTable[row]->EvtSuberID == EvtOperID )
         {
             if( _mEvtPSDB_SubTable[row]->pEvtSubArgs )
@@ -520,6 +531,7 @@ void PLT_EVT_unpubEvts(/*ARG_IN*/TOS_EvtOperID_T EvtOperID)
     for(uint32_t row = 0; row < _mMayPubEvtNumMax; row++)
     {
         if( _mEvtPSDB_PubTable[row] 
+            && _mEvtPSDB_PubTable[row]->Type == _TOS_RowType_EvtPuber
             && _mEvtPSDB_PubTable[row]->EvtPuberID == EvtOperID )
         {
             free(_mEvtPSDB_PubTable[row]);

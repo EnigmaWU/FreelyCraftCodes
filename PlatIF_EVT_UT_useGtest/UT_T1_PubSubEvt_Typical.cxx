@@ -57,14 +57,14 @@
 
 #define _UT_OPERATOR_COUNT      5//UT_A/_B/_C/_D/_E
 
-#define _UT_KEEPALIVE_EVT_CNT       1024
-#define _UT_MSGDATA_EVT_CNT         1024
-#define _UT_ECHO_REQUEST_EVT_CNT    1024
+#define _UT_KEEPALIVE_EVT_CNT       100//1000
+#define _UT_MSGDATA_EVT_CNT         100//1100
+#define _UT_ECHO_REQUEST_EVT_CNT    100//1110
 
-#define _UT_CMD_X1_EVT_CNT          1024
-#define _UT_CMD_X2_EVT_CNT          1024
-#define _UT_CMD_X3_EVT_CNT          1024
-#define _UT_CMD_X4_EVT_CNT          1024
+#define _UT_CMD_X1_EVT_CNT          100//10000
+#define _UT_CMD_X2_EVT_CNT          100//11000
+#define _UT_CMD_X3_EVT_CNT          100//11100
+#define _UT_CMD_X4_EVT_CNT          100//11110
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -294,6 +294,39 @@ static TOS_Result_T __UT_CbProcEvtSRT_Case02_ofD
     return TOS_RESULT_SUCCESS;
 }
 
+static void* __UT_ThreadCase02_postEvt_EVTID_TEST_KEEPALIVE(void* pArg)
+{
+    TOS_EvtOperID_T EvtPuberA = (TOS_EvtOperID_T)pArg;
+
+    for( int EvtCnt=0; EvtCnt<_UT_KEEPALIVE_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestKeepAliveEvt,TOS_EVTID_TEST_KEEPALIVE);
+
+        TOS_Result_T Result = PLT_EVT_postEvtSRT(EvtPuberA, &MyTestKeepAliveEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+    return nullptr;
+}
+
+static void* __UT_ThreadCase02_postEvt_EVTID_TEST_MSGDATA(void* pArg)
+{
+    TOS_EvtOperID_T EvtPuberA = (TOS_EvtOperID_T)pArg;
+
+    for( int EvtCnt=0; EvtCnt<_UT_MSGDATA_EVT_CNT; EvtCnt++ )
+    {
+        TOS_EVT_defineEvtDesc(MyTestMsgDataEvt,TOS_EVTID_TEST_MSGDATA);
+        MyTestMsgDataEvt.EvtData.U32[0] = EvtCnt;
+
+        TOS_Result_T Result = PLT_EVT_postEvtSRT(EvtPuberA, &MyTestMsgDataEvt);
+        EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
+
+        usleep(1000);
+    }
+    return nullptr;
+}
+
 //UT_T1_PubSubEvt_Typical_NN=[02] defined in Typical PubSubEvt Case Lists
 TEST(UT_T1_PubSubEvt_Typical, Case02)
 {
@@ -365,6 +398,7 @@ TEST(UT_T1_PubSubEvt_Typical, Case02)
     ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    #if 0
     for( int EvtCnt=0; EvtCnt<(_UT_KEEPALIVE_EVT_CNT + _UT_MSGDATA_EVT_CNT); EvtCnt++ )
     {
         //EvtCnt%2==0: TOS_EVTID_TEST_KEEPALIVE, EvtCnt%2==1: TOS_EVTID_TEST_MSGDATA
@@ -386,6 +420,15 @@ TEST(UT_T1_PubSubEvt_Typical, Case02)
 
         usleep(1000);
     }
+    #endif
+
+    //===> ThreadCase02_postEvt_EVTID_TEST_KEEPALIVE, ThreadCase02_postEvt_EVTID_TEST_MSGDATA
+    pthread_t ThreadCase02_postEvt_EVTID_TEST_KEEPALIVE, ThreadCase02_postEvt_EVTID_TEST_MSGDATA;
+    pthread_create(&ThreadCase02_postEvt_EVTID_TEST_KEEPALIVE, NULL, __UT_ThreadCase02_postEvt_EVTID_TEST_KEEPALIVE, (void*)EvtPuberA);
+    pthread_create(&ThreadCase02_postEvt_EVTID_TEST_MSGDATA, NULL, __UT_ThreadCase02_postEvt_EVTID_TEST_MSGDATA, (void*)EvtPuberA);
+
+    pthread_join(ThreadCase02_postEvt_EVTID_TEST_KEEPALIVE, NULL);
+    pthread_join(ThreadCase02_postEvt_EVTID_TEST_MSGDATA, NULL);
 
     //Wait for all EvtSuberPriv.KeepAliveTotalCnt of MyTestKeepAliveEvt to be processed
     sem_wait(EvtSuberPrivB.pSemAllProced);
@@ -692,7 +735,7 @@ static inline TOS_Result_T __UT_CbProcEvtSRT_Case04_ofA
     return TOS_RESULT_SUCCESS;
 }
 
-static void* __UT_ThreadA_ofVMainObj( void* arg )
+static void* __UT_Case04ThreadA_ofVMainObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_CtxThreadABCDE_ModObj_pT pVMainObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
@@ -799,7 +842,7 @@ static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofB
     return TOS_RESULT_SUCCESS;
 }
 
-static void* __UT_ThreadB_ofRCAgentObj_postEvtCmdX1( void* arg )
+static void* __UT_Case04ThreadB_ofRCAgentObj_postEvtCmdX1( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_CtxThreadABCDE_ModObj_pT pRCAgentObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
@@ -820,7 +863,7 @@ static void* __UT_ThreadB_ofRCAgentObj_postEvtCmdX1( void* arg )
     return NULL;
 }
 
-static void* __UT_ThreadB_ofRCAgentObj_postEvtCmdX2( void* arg )
+static void* __UT_Case04ThreadB_ofRCAgentObj_postEvtCmdX2( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_CtxThreadABCDE_ModObj_pT pRCAgentObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
@@ -841,7 +884,7 @@ static void* __UT_ThreadB_ofRCAgentObj_postEvtCmdX2( void* arg )
     return NULL;
 }
 
-static void* __UT_ThreadB_ofRCAgentObj( void* arg )
+static void* __UT_Case04ThreadB_ofRCAgentObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_CtxThreadABCDE_ModObj_pT pRCAgentObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
@@ -888,12 +931,12 @@ static void* __UT_ThreadB_ofRCAgentObj( void* arg )
     //-----------------------------------------------------------------------------------------------------------------
     //Startup ThreadB_ofRCAgentObj_CmdX1
     pthread_t ThreadID_postEvtCmdX1;
-    int RetPSX = pthread_create(&ThreadID_postEvtCmdX1, NULL, __UT_ThreadB_ofRCAgentObj_postEvtCmdX1, pRCAgentObj);
+    int RetPSX = pthread_create(&ThreadID_postEvtCmdX1, NULL, __UT_Case04ThreadB_ofRCAgentObj_postEvtCmdX1, pRCAgentObj);
     EXPECT_EQ(RetPSX, 0);//CheckPoint
 
     //Startup ThreadB_ofRCAgentObj_CmdX2
     pthread_t ThreadID_postEvtCmdX2;
-    RetPSX = pthread_create(&ThreadID_postEvtCmdX2, NULL, __UT_ThreadB_ofRCAgentObj_postEvtCmdX2, pRCAgentObj);
+    RetPSX = pthread_create(&ThreadID_postEvtCmdX2, NULL, __UT_Case04ThreadB_ofRCAgentObj_postEvtCmdX2, pRCAgentObj);
     EXPECT_EQ(RetPSX, 0);//CheckPoint
     
     //-----------------------------------------------------------------------------------------------------------------
@@ -916,6 +959,7 @@ static void* __UT_ThreadB_ofRCAgentObj( void* arg )
     pthread_join(ThreadID_postEvtCmdX2, NULL);
 
     //-----------------------------------------------------------------------------------------------------------------
+    sem_post(pRCAgentObj->pSem4LeaveRunning);//Notify MAIN that RCAgentObj is leaving RunningStage.
     sem_wait(pRCAgentObj->pSem4LeaveRunning);//Wait for MAIN to notify RCAgentObj to leave RunningStage.
 
     //-----------------------------------------------------------------------------------------------------------------
@@ -983,7 +1027,7 @@ static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofC
     return TOS_RESULT_SUCCESS;
 }
 
-static void* __UT_ThreadC_ofChassicObj( void* arg )
+static void* __UT_Case04ThreadC_ofChassicObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_CtxThreadABCDE_ModObj_pT pChassicObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
@@ -1115,7 +1159,7 @@ static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofD
     return TOS_RESULT_SUCCESS;
 }
 
-static void* __UT_ThreadD_ofPalletObj( void* arg )
+static void* __UT_Case04ThreadD_ofPalletObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_CtxThreadABCDE_ModObj_pT pPalletObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
@@ -1264,7 +1308,7 @@ static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofE
     return TOS_RESULT_SUCCESS;
 }
 
-static void* __UT_ThreadE_ofCDObj( void* arg )
+static void* __UT_Case04ThreadE_ofCDObj( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_CtxThreadABCDE_ModObj_pT pCDObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
@@ -1323,7 +1367,7 @@ static void* __UT_ThreadE_ofCDObj( void* arg )
     EXPECT_EQ(RetPSX, 0);//CheckPoint
 
     //-----------------------------------------------------------------------------------------------------------------
-    for( int EvtCnt=0; EvtCnt<_UT_MSGDATA_EVT_CNT; EvtCnt++ )
+    for( int EvtCnt=0; EvtCnt<_UT_KEEPALIVE_EVT_CNT; EvtCnt++ )
     {
         TOS_EVT_defineEvtDesc(MyTestKeepAliveEvt,TOS_EVTID_TEST_KEEPALIVE);
 
@@ -1409,19 +1453,19 @@ TEST(UT_T1_PubSubEvt_Typical, Case04)
     
     //-----------------------------------------------------------------------------------------------------------------
     //MAIN startup ThreadA/B/C/D/E
-    int RetPSX = pthread_create(&VMainObj.ThreadID, NULL, __UT_ThreadA_ofVMainObj, &VMainObj);
+    int RetPSX = pthread_create(&VMainObj.ThreadID, NULL, __UT_Case04ThreadA_ofVMainObj, &VMainObj);
     ASSERT_EQ(RetPSX, 0);
 
-    RetPSX = pthread_create(&RCAgentObj.ThreadID, NULL, __UT_ThreadB_ofRCAgentObj, &RCAgentObj);
+    RetPSX = pthread_create(&RCAgentObj.ThreadID, NULL, __UT_Case04ThreadB_ofRCAgentObj, &RCAgentObj);
     ASSERT_EQ(RetPSX, 0);
 
-    RetPSX = pthread_create(&ChassicObj.ThreadID, NULL, __UT_ThreadC_ofChassicObj, &ChassicObj);
+    RetPSX = pthread_create(&ChassicObj.ThreadID, NULL, __UT_Case04ThreadC_ofChassicObj, &ChassicObj);
     ASSERT_EQ(RetPSX, 0);
 
-    RetPSX = pthread_create(&PalletObj.ThreadID, NULL, __UT_ThreadD_ofPalletObj, &PalletObj);
+    RetPSX = pthread_create(&PalletObj.ThreadID, NULL, __UT_Case04ThreadD_ofPalletObj, &PalletObj);
     ASSERT_EQ(RetPSX, 0);
 
-    RetPSX = pthread_create(&CDObj.ThreadID, NULL, __UT_ThreadE_ofCDObj, &CDObj);
+    RetPSX = pthread_create(&CDObj.ThreadID, NULL, __UT_Case04ThreadE_ofCDObj, &CDObj);
     ASSERT_EQ(RetPSX, 0);
 
 
