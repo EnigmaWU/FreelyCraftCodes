@@ -55,16 +55,17 @@
  *  TODO(@W)=[Case04]:...
  */
 
-#define _UT_OPERATOR_COUNT      5//UT_A/_B/_C/_D/_E
+#define _UT_OPERATOR_COUNT          6//UT_A[1,2]/_B/_C/_D/_E
+#define _UT_EVTQUEUE_DEPTH_MAX      256//Case04
 
-#define _UT_KEEPALIVE_EVT_CNT       100//1000
-#define _UT_MSGDATA_EVT_CNT         100//1100
-#define _UT_ECHO_REQUEST_EVT_CNT    100//1110
+#define _UT_KEEPALIVE_EVT_CNT       1000
+#define _UT_MSGDATA_EVT_CNT         1100
+#define _UT_ECHO_REQUEST_EVT_CNT    1110
 
-#define _UT_CMD_X1_EVT_CNT          100//10000
-#define _UT_CMD_X2_EVT_CNT          100//11000
-#define _UT_CMD_X3_EVT_CNT          100//11100
-#define _UT_CMD_X4_EVT_CNT          100//11110
+#define _UT_CMD_X1_EVT_CNT          10000
+#define _UT_CMD_X2_EVT_CNT          11000
+#define _UT_CMD_X3_EVT_CNT          11100
+#define _UT_CMD_X4_EVT_CNT          11110
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -76,7 +77,8 @@
     sem_t *pSemAllProced;
  } _UT_EvtSuberPrivCase01_T, *_UT_EvtSuberPrivCase01_pT;      
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case01
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case01_CbProcEvtSRT
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase01_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase01_pT)pToEvtSuberPriv;
@@ -121,7 +123,7 @@ TEST(UT_T1_PubSubEvt_Typical, Case01)
     EvtSuberPrivB.pSemAllProced = sem_open("Sem4EvtProcCmpltB", O_CREAT, 0644, 0);
     ASSERT_NE(EvtSuberPrivB.pSemAllProced, nullptr);
     
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case01, };
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_Case01_CbProcEvtSRT, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivB;
 
     Result = PLT_EVT_subEvts(EvtSuberB, SubEvtIDs, TOS_calcArrayElmtCnt(SubEvtIDs), &EvtSubArgs);
@@ -205,7 +207,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase02_ofB_T, *_UT_EvtSuberPrivCase02_ofB_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case02_ofB
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case02_CbProcEvtSRT_ofB
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase02_ofB_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase02_ofB_pT)pToEvtSuberPriv;
@@ -233,7 +236,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase02_ofC_T, *_UT_EvtSuberPrivCase02_ofC_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case02_ofC
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case02_CbProcEvtSRT_ofC
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase02_ofC_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase02_ofC_pT)pToEvtSuberPriv;
@@ -265,7 +269,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase02_ofD_T, *_UT_EvtSuberPrivCase02_ofD_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case02_ofD
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case02_CbProcEvtSRT_ofD
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase02_ofD_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase02_ofD_pT)pToEvtSuberPriv;
@@ -353,7 +358,7 @@ TEST(UT_T1_PubSubEvt_Typical, Case02)
     ASSERT_NE(EvtSuberPrivB.pSemAllProced, nullptr);
     
     TOS_EvtID_T SubEvtIDs_ofB[] = {TOS_EVTID_TEST_KEEPALIVE};
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case02_ofB, };
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_Case02_CbProcEvtSRT_ofB, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivB;
 
     Result = PLT_EVT_subEvts(EvtSuberB, SubEvtIDs_ofB, TOS_calcArrayElmtCnt(SubEvtIDs_ofB), &EvtSubArgs);
@@ -370,7 +375,7 @@ TEST(UT_T1_PubSubEvt_Typical, Case02)
     ASSERT_NE(EvtSuberPrivC.pSemAllProced, nullptr);
 
     TOS_EvtID_T SubEvtIDs_ofC[] = {TOS_EVTID_TEST_MSGDATA};
-    EvtSubArgs.CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case02_ofC;
+    EvtSubArgs.CbProcEvtSRT_F = __UT_Case02_CbProcEvtSRT_ofC;
     EvtSubArgs.ToObjPriv = &EvtSuberPrivC;
 
     Result = PLT_EVT_subEvts(EvtSuberC, SubEvtIDs_ofC, TOS_calcArrayElmtCnt(SubEvtIDs_ofC), &EvtSubArgs);
@@ -387,7 +392,7 @@ TEST(UT_T1_PubSubEvt_Typical, Case02)
     ASSERT_NE(EvtSuberPrivD.pSemAllProced, nullptr);
 
     TOS_EvtID_T SubEvtIDs_ofD[] = {TOS_EVTID_TEST_KEEPALIVE, TOS_EVTID_TEST_MSGDATA};
-    EvtSubArgs.CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case02_ofD;
+    EvtSubArgs.CbProcEvtSRT_F = __UT_Case02_CbProcEvtSRT_ofD;
     EvtSubArgs.ToObjPriv = &EvtSuberPrivD;
 
     Result = PLT_EVT_subEvts(EvtSuberD, SubEvtIDs_ofD, TOS_calcArrayElmtCnt(SubEvtIDs_ofD), &EvtSubArgs);
@@ -466,7 +471,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase03_ofA_T, *_UT_EvtSuberPrivCase03_ofA_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case03_ofA
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case03_CbProcEvtSRT_ofA
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase03_ofA_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase03_ofA_pT)pToEvtSuberPriv;
@@ -492,7 +498,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase03_ofB_T, *_UT_EvtSuberPrivCase03_ofB_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case03_ofB
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case03_CbProcEvtSRT_ofB
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase03_ofB_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase03_ofB_pT)pToEvtSuberPriv;
@@ -523,7 +530,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase03_ofCD_T, *_UT_EvtSuberPrivCase03_ofCD_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case03_ofCD
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case03_CbProcEvtSRT_ofCD
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase03_ofCD_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase03_ofCD_pT)pToEvtSuberPriv;
@@ -561,7 +569,7 @@ TEST(UT_T1_PubSubEvt_Typical, Case03)
     EvtSuberPrivA.pSemAllProced = sem_open("Sem4EvtProcCmpltA", O_CREAT, 0644, 0);
     ASSERT_NE(EvtSuberPrivA.pSemAllProced, nullptr);
 
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case03_ofA, };
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_Case03_CbProcEvtSRT_ofA, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivA;
 
     Result = PLT_EVT_subEvts(EvtOperA, SubEvtIDs_ofA, TOS_calcArrayElmtCnt(SubEvtIDs_ofA), &EvtSubArgs);
@@ -583,7 +591,7 @@ TEST(UT_T1_PubSubEvt_Typical, Case03)
     ASSERT_NE(EvtSuberPrivB.pSemAllProced, nullptr);
 
     EvtSubArgs.ToObjPriv = &EvtSuberPrivB;
-    EvtSubArgs.CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case03_ofB;
+    EvtSubArgs.CbProcEvtSRT_F = __UT_Case03_CbProcEvtSRT_ofB;
 
     Result = PLT_EVT_subEvts(EvtOperB, SubEvtIDs_ofB, TOS_calcArrayElmtCnt(SubEvtIDs_ofB), &EvtSubArgs);
     ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
@@ -609,13 +617,13 @@ TEST(UT_T1_PubSubEvt_Typical, Case03)
     ASSERT_NE(EvtSuberPrivD.pSemAllProced, nullptr);
 
     EvtSubArgs.ToObjPriv = &EvtSuberPrivC;
-    EvtSubArgs.CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case03_ofCD;
+    EvtSubArgs.CbProcEvtSRT_F = __UT_Case03_CbProcEvtSRT_ofCD;
 
     Result = PLT_EVT_subEvts(EvtSuberC, SubEvtIDs_ofCD, TOS_calcArrayElmtCnt(SubEvtIDs_ofCD), &EvtSubArgs);
     ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     EvtSubArgs.ToObjPriv = &EvtSuberPrivD;
-    EvtSubArgs.CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case03_ofCD;
+    EvtSubArgs.CbProcEvtSRT_F = __UT_Case03_CbProcEvtSRT_ofCD;
 
     Result = PLT_EVT_subEvts(EvtSuberD, SubEvtIDs_ofCD, TOS_calcArrayElmtCnt(SubEvtIDs_ofCD), &EvtSubArgs);
     ASSERT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
@@ -691,11 +699,13 @@ typedef struct
         struct
         {
             TOS_EvtOperID_T EvtPuberID;
+            unsigned long CmdX1PostedCnt, CmdX2PostedCnt;
         } RCAgentPriv;
 
         struct 
         {
             TOS_EvtOperID_T EvtPuberID;
+            unsigned long CmdX3PostedCnt, CmdX4PostedCnt;
         } CDObjPriv;
     };
 } _UT_CtxThreadABCDE_ModObj_T, *_UT_CtxThreadABCDE_ModObj_pT;
@@ -709,7 +719,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofA_T, *_UT_EvtSuberPrivCase04_ofA_pT;
 
-static inline TOS_Result_T __UT_CbProcEvtSRT_Case04_ofA
+__attribute__((no_sanitize_thread))
+static inline TOS_Result_T __UT_Case04_CbProcEvtSRT_ofA
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase04_ofA_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase04_ofA_pT)pToEvtSuberPriv;
@@ -763,11 +774,14 @@ static void* __UT_Case04ThreadA_ofVMainObj( void* arg )
     Result = PLT_EVT_regOper(&EvtSuberA, &EvtSuberArgs);
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
-    _UT_EvtSuberPrivCase04_ofA_T EvtSuberPrivA = { .EvtSuberID = EvtSuberA, .KeepAliveTotalCnt = _UT_KEEPALIVE_EVT_CNT * 4, .KeepAliveProcedCnt = 0, .CmdAckTotalCnt = _UT_CMD_X1_EVT_CNT + _UT_CMD_X2_EVT_CNT + _UT_CMD_X3_EVT_CNT + _UT_CMD_X4_EVT_CNT, .CmdAckProcedCnt = 0 };
-    EvtSuberPrivA.pSemAllProced = sem_open("Sem4EvtProcCmpltA", O_CREAT, 0644, 0);
+    _UT_EvtSuberPrivCase04_ofA_T EvtSuberPrivA = { .EvtSuberID = EvtSuberA, 
+        .KeepAliveTotalCnt = _UT_KEEPALIVE_EVT_CNT * 4, 
+        .KeepAliveProcedCnt = 0, .CmdAckTotalCnt = _UT_CMD_X1_EVT_CNT + _UT_CMD_X2_EVT_CNT + _UT_CMD_X3_EVT_CNT + _UT_CMD_X4_EVT_CNT, .CmdAckProcedCnt = 0 };
+    sem_unlink("Sem4Case04EvtProcCmpltA");
+    EvtSuberPrivA.pSemAllProced = sem_open("Sem4Case04EvtProcCmpltA", O_CREAT, 0644, 0);
     EXPECT_NE(EvtSuberPrivA.pSemAllProced, nullptr);
 
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofA, };
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_Case04_CbProcEvtSRT_ofA, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivA;
 
     TOS_EvtID_T SubEvtIDs_ofA[] = {TOS_EVTID_TEST_CMD_X1_ACK, TOS_EVTID_TEST_CMD_X2_ACK, TOS_EVTID_TEST_CMD_X3_ACK, TOS_EVTID_TEST_CMD_X4_ACK, TOS_EVTID_TEST_KEEPALIVE};
@@ -813,15 +827,14 @@ static void* __UT_Case04ThreadA_ofVMainObj( void* arg )
 typedef struct 
 {
     TOS_EvtOperID_T EvtSuberID; 
-    unsigned long KeepAliveTotalCnt;
-    unsigned long CmdX1TotalCnt;
-    unsigned long CmdX2TotalCnt;
+    unsigned long MsgDataTotalCnt;
     unsigned long MsgDataProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofB_T, *_UT_EvtSuberPrivCase04_ofB_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofB
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case04_CbProcEvtSRT_ofB
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase04_ofB_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase04_ofB_pT)pToEvtSuberPriv;
@@ -835,7 +848,7 @@ static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofB
         pEvtSuberPriv->MsgDataProcedCnt++;
     }
 
-    if( pEvtSuberPriv->MsgDataProcedCnt == _UT_MSGDATA_EVT_CNT )
+    if( pEvtSuberPriv->MsgDataProcedCnt == pEvtSuberPriv->MsgDataTotalCnt )
     {
         sem_post(pEvtSuberPriv->pSemAllProced);
     }
@@ -858,6 +871,7 @@ static void* __UT_Case04ThreadB_ofRCAgentObj_postEvtCmdX1( void* arg )
         Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestCmdX1Evt);
         EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
+        pRCAgentObj->RCAgentPriv.CmdX1PostedCnt++;
         usleep(1000);
     }
     return NULL;
@@ -879,6 +893,7 @@ static void* __UT_Case04ThreadB_ofRCAgentObj_postEvtCmdX2( void* arg )
         Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestCmdX2Evt);
         EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
+        pRCAgentObj->RCAgentPriv.CmdX2PostedCnt++;
         usleep(1000);
     }
     return NULL;
@@ -914,11 +929,13 @@ static void* __UT_Case04ThreadB_ofRCAgentObj( void* arg )
 
     TOS_EvtID_T SubEvtIDs_ofB[] = {TOS_EVTID_TEST_MSGDATA};
 
-    _UT_EvtSuberPrivCase04_ofB_T EvtSuberPrivB = { .EvtSuberID = EvtSuberID, .KeepAliveTotalCnt = _UT_KEEPALIVE_EVT_CNT, .CmdX1TotalCnt = _UT_CMD_X1_EVT_CNT, .CmdX2TotalCnt = _UT_CMD_X2_EVT_CNT, .MsgDataProcedCnt = 0 };
-    EvtSuberPrivB.pSemAllProced = sem_open("Sem4EvtProcCmpltB", O_CREAT, 0644, 0);
+    _UT_EvtSuberPrivCase04_ofB_T EvtSuberPrivB = { .EvtSuberID = EvtSuberID, 
+        .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
+    sem_unlink("Sem4Case04EvtProcCmpltB");
+    EvtSuberPrivB.pSemAllProced = sem_open("Sem4Case04EvtProcCmpltB", O_CREAT, 0644, 0);
     EXPECT_NE(EvtSuberPrivB.pSemAllProced, nullptr);
 
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofB, };
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_Case04_CbProcEvtSRT_ofB, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivB;
 
     Result = PLT_EVT_subEvts(EvtSuberID, SubEvtIDs_ofB, TOS_calcArrayElmtCnt(SubEvtIDs_ofB), &EvtSubArgs);
@@ -960,7 +977,7 @@ static void* __UT_Case04ThreadB_ofRCAgentObj( void* arg )
 
     //-----------------------------------------------------------------------------------------------------------------
     sem_post(pRCAgentObj->pSem4LeaveRunning);//Notify MAIN that RCAgentObj is leaving RunningStage.
-    sem_wait(pRCAgentObj->pSem4LeaveRunning);//Wait for MAIN to notify RCAgentObj to leave RunningStage.
+    sem_wait(pRCAgentObj->pSem4ExitState);//Wait for MAIN to notify RCAgentObj to exit.
 
     //-----------------------------------------------------------------------------------------------------------------
     PLT_EVT_unpubEvts(EvtOperB);
@@ -988,7 +1005,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofC_T, *_UT_EvtSuberPrivCase04_ofC_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofC
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case04_CbProcEvtSRT_ofC
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase04_ofC_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase04_ofC_pT)pToEvtSuberPriv;
@@ -1058,11 +1076,15 @@ static void* __UT_Case04ThreadC_ofChassicObj( void* arg )
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     //===> EvtSuberC
-    _UT_EvtSuberPrivCase04_ofC_T EvtSuberPrivC = { .EvtSuberID = EvtSuberID, .CmdX1TotalCnt = _UT_CMD_X1_EVT_CNT, .CmdX1ProcedCnt = 0, .CmdX3TotalCnt = _UT_CMD_X3_EVT_CNT, .CmdX3ProcedCnt = 0, .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
-    EvtSuberPrivC.pSemAllProced = sem_open("Sem4EvtProcCmpltC", O_CREAT, 0644, 0);
+    _UT_EvtSuberPrivCase04_ofC_T EvtSuberPrivC = { .EvtSuberID = EvtSuberID, 
+        .CmdX1TotalCnt = _UT_CMD_X1_EVT_CNT, .CmdX1ProcedCnt = 0, 
+        .CmdX3TotalCnt = _UT_CMD_X3_EVT_CNT, .CmdX3ProcedCnt = 0, 
+        .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
+    sem_unlink("Sem4Case04_EvtProcCmpltC");
+    EvtSuberPrivC.pSemAllProced = sem_open("Sem4Case04_EvtProcCmpltC", O_CREAT, 0644, 0);
     EXPECT_NE(EvtSuberPrivC.pSemAllProced, nullptr);
     
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofC, };
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_Case04_CbProcEvtSRT_ofC, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivC;
 
     TOS_EvtID_T SubEvtIDs_ofC[] = {TOS_EVTID_TEST_CMD_X1, TOS_EVTID_TEST_CMD_X3, TOS_EVTID_TEST_MSGDATA};
@@ -1120,7 +1142,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofD_T, *_UT_EvtSuberPrivCase04_ofD_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofD
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case04_CbProcEvtSRT_ofD
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase04_ofD_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase04_ofD_pT)pToEvtSuberPriv;
@@ -1190,11 +1213,15 @@ static void* __UT_Case04ThreadD_ofPalletObj( void* arg )
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
     //===> EvtSuberD
-    _UT_EvtSuberPrivCase04_ofD_T EvtSuberPrivD = { .EvtSuberID = EvtSuberID, .CmdX2TotalCnt = _UT_CMD_X2_EVT_CNT, .CmdX2ProcedCnt = 0, .CmdX4TotalCnt = _UT_CMD_X4_EVT_CNT, .CmdX4ProcedCnt = 0, .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
-    EvtSuberPrivD.pSemAllProced = sem_open("Sem4EvtProcCmpltD", O_CREAT, 0644, 0);
+    _UT_EvtSuberPrivCase04_ofD_T EvtSuberPrivD = { .EvtSuberID = EvtSuberID, 
+        .CmdX2TotalCnt = _UT_CMD_X2_EVT_CNT, .CmdX2ProcedCnt = 0, 
+        .CmdX4TotalCnt = _UT_CMD_X4_EVT_CNT, .CmdX4ProcedCnt = 0, 
+        .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
+    sem_unlink("Sem4Case04EvtProcCmpltD");
+    EvtSuberPrivD.pSemAllProced = sem_open("Sem4Case04EvtProcCmpltD", O_CREAT, 0644, 0);
     EXPECT_NE(EvtSuberPrivD.pSemAllProced, nullptr);
 
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofD, };
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_Case04_CbProcEvtSRT_ofD, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivD;
 
     TOS_EvtID_T SubEvtIDs_ofD[] = {TOS_EVTID_TEST_CMD_X2, TOS_EVTID_TEST_CMD_X4, TOS_EVTID_TEST_MSGDATA};
@@ -1236,7 +1263,7 @@ static void* __UT_Case04ThreadD_ofPalletObj( void* arg )
 
 //---------------------------------------------------------------------------------------------------------------------
 //CDObj in ThreadE(RefMore: [Case04]:UT_E(as CollisionDetectorObj)@Thread_E
-static void* __UT_ThreadE_ofCDObj_postEvtCmdX3( void* arg )
+static void* __UT_Case04ThreadE_ofCDObj_postEvtCmdX3( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_CtxThreadABCDE_ModObj_pT pCDObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
@@ -1252,12 +1279,13 @@ static void* __UT_ThreadE_ofCDObj_postEvtCmdX3( void* arg )
         Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestCmdX3Evt);
         EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
+        pCDObj->CDObjPriv.CmdX3PostedCnt++;
         usleep(1000);
     }
     return NULL;
 }
 
-static void* __UT_ThreadE_ofCDObj_postEvtCmdX4( void* arg )
+static void* __UT_Case04ThreadE_ofCDObj_postEvtCmdX4( void* arg )
 {
     TOS_Result_T Result = TOS_RESULT_BUG;
     _UT_CtxThreadABCDE_ModObj_pT pCDObj = (_UT_CtxThreadABCDE_ModObj_pT)arg;
@@ -1273,6 +1301,7 @@ static void* __UT_ThreadE_ofCDObj_postEvtCmdX4( void* arg )
         Result = PLT_EVT_postEvtSRT(EvtPuberID, &MyTestCmdX4Evt);
         EXPECT_EQ(Result, TOS_RESULT_SUCCESS);//CheckPoint
 
+        pCDObj->CDObjPriv.CmdX4PostedCnt++;
         usleep(1000);
     }
     return NULL;
@@ -1287,7 +1316,8 @@ typedef struct
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofE_T, *_UT_EvtSuberPrivCase04_ofE_pT;
 
-static TOS_Result_T __UT_CbProcEvtSRT_Case04_ofE
+__attribute__((no_sanitize_thread))
+static TOS_Result_T __UT_Case04_CbProcEvtSRT_ofE
     (/*ARG_IN*/TOS_EvtOperID_T EvtSuberID, /*ARG_IN*/const TOS_EvtDesc_pT pEvtDesc, /*ARG_IN*/void* pToEvtSuberPriv)
 {
     _UT_EvtSuberPrivCase04_ofE_pT pEvtSuberPriv = (_UT_EvtSuberPrivCase04_ofE_pT)pToEvtSuberPriv;
@@ -1340,11 +1370,13 @@ static void* __UT_Case04ThreadE_ofCDObj( void* arg )
 
     //-----------------------------------------------------------------------------------------------------------------
     //===> EvtSuberE
-    _UT_EvtSuberPrivCase04_ofE_T EvtSuberPrivE = { .EvtSuberID = EvtSuberID, .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
-    EvtSuberPrivE.pSemAllProced = sem_open("Sem4EvtProcCmpltE", O_CREAT, 0644, 0);
+    _UT_EvtSuberPrivCase04_ofE_T EvtSuberPrivE = { .EvtSuberID = EvtSuberID, 
+        .MsgDataTotalCnt = _UT_MSGDATA_EVT_CNT, .MsgDataProcedCnt = 0 };
+    sem_unlink("Sem4Case04EvtProcCmpltE");
+    EvtSuberPrivE.pSemAllProced = sem_open("Sem4Case04EvtProcCmpltE", O_CREAT, 0644, 0);
     EXPECT_NE(EvtSuberPrivE.pSemAllProced, nullptr);
 
-    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_CbProcEvtSRT_Case04_ofE, };
+    TOS_EvtSubArgs_T EvtSubArgs = { .CbProcEvtSRT_F = __UT_Case04_CbProcEvtSRT_ofE, };
     EvtSubArgs.ToObjPriv = &EvtSuberPrivE;
 
     TOS_EvtID_T SubEvtIDs_ofE[] = {TOS_EVTID_TEST_MSGDATA};
@@ -1358,12 +1390,12 @@ static void* __UT_Case04ThreadE_ofCDObj( void* arg )
     //-----------------------------------------------------------------------------------------------------------------
     //Startup ThreadE_ofCDObj_postEvtCmdX3
     pthread_t ThreadID_postEvtCmdX3;
-    int RetPSX = pthread_create(&ThreadID_postEvtCmdX3, NULL, __UT_ThreadE_ofCDObj_postEvtCmdX3, pCDObj);
+    int RetPSX = pthread_create(&ThreadID_postEvtCmdX3, NULL, __UT_Case04ThreadE_ofCDObj_postEvtCmdX3, pCDObj);
     EXPECT_EQ(RetPSX, 0);//CheckPoint
 
     //Startup ThreadE_ofCDObj_postEvtCmdX4
     pthread_t ThreadID_postEvtCmdX4;
-    RetPSX = pthread_create(&ThreadID_postEvtCmdX4, NULL, __UT_ThreadE_ofCDObj_postEvtCmdX4, pCDObj);
+    RetPSX = pthread_create(&ThreadID_postEvtCmdX4, NULL, __UT_Case04ThreadE_ofCDObj_postEvtCmdX4, pCDObj);
     EXPECT_EQ(RetPSX, 0);//CheckPoint
 
     //-----------------------------------------------------------------------------------------------------------------
@@ -1528,12 +1560,13 @@ TEST(UT_T1_PubSubEvt_Typical, Case04)
 
 void UTG_T1_PubSubEvt_Typical_setupGroupContext(void)
 {
-    TOS_EvtModuleArgs_T EvtModArgs = 
+    TOS_EvtMangerModArgs_T EvtModArgs = 
     { 
         .Params = 
         { 
-            .MayRegOperNumMax = _UT_OPERATOR_COUNT,
-            .MayPubEvtNumMax  = TOS_EVTPARAM_DEFAULT,
+            .MayRegOperNumMax       = _UT_OPERATOR_COUNT,
+            .MayPubEvtNumMax        = TOS_EVTPARAM_DEFAULT,
+            .MayEvtQueueDepthMax    = _UT_EVTQUEUE_DEPTH_MAX,
         },
     };
 

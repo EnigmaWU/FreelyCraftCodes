@@ -19,15 +19,19 @@ if(CMAKE_BUILD_TYPE STREQUAL "DiagASAN")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
 elseif(CMAKE_BUILD_TYPE STREQUAL "DiagTSAN")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=thread -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=thread -fno-omit-frame-pointer")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread")
 elseif(CMAKE_BUILD_TYPE STREQUAL "DiagUBSAN")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=undefined -fno-omit-frame-pointer")
+    #TODO(@W): CXX_FLAGS
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=undefined")
 elseif(CMAKE_BUILD_TYPE STREQUAL "DiagMSAN")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=memory -fno-omit-frame-pointer")
+    #TODO(@W): CXX_FLAGS
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=memory")
 elseif(CMAKE_BUILD_TYPE STREQUAL "DiagLSAN")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=leak -fno-omit-frame-pointer")
+    #TODO(@W): CXX_FLAGS
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=leak")
 endif()
 

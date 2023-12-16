@@ -107,7 +107,7 @@ TOS_Result_T PLT_EVT_postEvtHRT
 TOS_Result_T PLT_EVT_regOper(/*ARG_OUT*/ TOS_EvtOperID_T*, /*ARG_IN*/const TOS_EvtOperArgs_pT);
 
 
-TOS_Result_T PLT_EVT_initEvtManger(/*ARG_IN*/const TOS_EvtModuleArgs_pT);
+TOS_Result_T PLT_EVT_initEvtManger(/*ARG_IN*/const TOS_EvtMangerModArgs_pT);
 
 
 TOS_Result_T PLT_EVT_enableEvtManger(void);

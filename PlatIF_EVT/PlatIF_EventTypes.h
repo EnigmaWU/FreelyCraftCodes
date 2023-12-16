@@ -67,6 +67,7 @@ typedef struct
 
 #define TOS_EVTPARAM_DEFAULT 0
 
+//EvtManger as Module init this following args/params
 typedef struct 
 {
     //TODO(@W): LogLevel, OpLogWriter_F
@@ -77,11 +78,12 @@ typedef struct
         uint16_t MayPubEvtNumMax;//How many MAX pubEvt() calls may be called by EvtPuber.
         uint16_t MaySubEvtNumMax;//How many MAX subEvt() calls may be called by EvtSuber.
         uint16_t MayEvtQueueNumMax;//How many MAX EvtQueue to create&run, FIX==1 now.
+        uint16_t MayEvtQueueDepthMax;//How many MAX EvtDescs may be stored in EvtQueue.
 
         //TODO(@W): uint16_t EvtQueueDepth;
         //TODO(@W): uint16_t PuberEvtMaxRate;//0=Default=100EPS
         //TODO(@W): +More...
     } Params;
-} TOS_EvtModuleArgs_T, *TOS_EvtModuleArgs_pT;
+} TOS_EvtMangerModArgs_T, *TOS_EvtMangerModArgs_pT;
 
 #endif//__PLAT_IF_EVENT_TYPES_H__

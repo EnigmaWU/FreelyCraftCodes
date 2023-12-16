@@ -54,5 +54,8 @@
 
     "clangd.arguments": [
         "--compile-commands-dir=${workspaceFolder}/CMakeBuilt",
+        "--background-index",
+        "--background-index-priority=normal",
+        "--clang-tidy",
     ],
 }
