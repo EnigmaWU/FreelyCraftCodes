@@ -16,17 +16,17 @@ typedef enum
     TOS_EVENT_TEST_ECHO_REQUEST             = (1<<2UL),//Hello from EvtPuber
     TOS_EVENT_TEST_ECHO_RESPONSE            = (1<<3UL),//HelloAck from EvtSuber in CbProcEvt_F
 
-    TOS_EVENT_TEST_CMD_X1                   = (1<<4UL),//NoData
-    TOS_EVENT_TEST_CMD_X1_ACK               = (1<<5UL),//NoData
+    TOS_EVENT_TEST_CMD_X1                   = (1<<4UL),//CmdX1 posted EvtPuberA and processed by EvtSuberB
+    TOS_EVENT_TEST_CMD_X1_ACK               = (1<<5UL),//CmdX1Ack posted EvtSuberB as EvtPuberB in CbProcEvt_F and processed by EvtSuberC
 
-    TOS_EVENT_TEST_CMD_X2                   = (1<<6UL),//NoData
-    TOS_EVENT_TEST_CMD_X2_ACK               = (1<<7UL),//NoData
+    TOS_EVENT_TEST_CMD_X2                   = (1<<6UL),//Ref: TOS_EVENT_TEST_CMD_X1/_ACK
+    TOS_EVENT_TEST_CMD_X2_ACK               = (1<<7UL),
 
-    TOS_EVENT_TEST_CMD_X3                   = (1<<8UL),//NoData
-    TOS_EVENT_TEST_CMD_X3_ACK               = (1<<9UL),//NoData
+    TOS_EVENT_TEST_CMD_X3                   = (1<<8UL),//Ref: TOS_EVENT_TEST_CMD_X1/_ACK
+    TOS_EVENT_TEST_CMD_X3_ACK               = (1<<9UL),
 
-    TOS_EVENT_TEST_CMD_X4                   = (1<<10UL),//NoData
-    TOS_EVENT_TEST_CMD_X4_ACK               = (1<<11UL),//NoData
+    TOS_EVENT_TEST_CMD_X4                   = (1<<10UL),//Ref: TOS_EVENT_TEST_CMD_X1/_ACK
+    TOS_EVENT_TEST_CMD_X4_ACK               = (1<<11UL),
 } TOS_EvtTestID_T;
 
 typedef enum

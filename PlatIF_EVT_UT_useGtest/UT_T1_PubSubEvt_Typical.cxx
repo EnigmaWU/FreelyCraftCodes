@@ -7,15 +7,16 @@
  * @brief Typical PubSubEvt Case Lists
  * UT_T1_PubSubEvt_Typical_NN
  *  =[Case01]: 
- *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_KEEPALIVE * 1024
+ *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_KEEPALIVE * _UT_KEEPALIVE_EVT_CNT
  *      UT_B/_C/_D: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE
  *  =[Case02]: 
- *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_KEEPALIVE * 1024 + TOS_EVTID_TEST_MSGDATA * 1024 alternating
+ *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_KEEPALIVE * _UT_KEEPALIVE_EVT_CNT 
+ *               + TOS_EVTID_TEST_MSGDATA * _UT_MSGDATA_EVT_CNT alternating
  *      UT_B: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE
  *      UT_C: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_MSGDATA
  *      UT_D: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_KEEPALIVE/_MSGDATA
  *  =[Case03]:
- *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_ECHO_REQUEST * 1024
+ *      UT_A: PubEvt/PostEvtSRT of TOS_EVTID_TEST_ECHO_REQUEST * _UT_ECHO_REQUEST_EVT_CNT
  *          SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_ECHO_RESPONSE
  *      UT_B: SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_ECHO_REQUEST
  *          PubEvt/PostEvtSRT of TOS_EVTID_TEST_ECHO_RESPONSE
@@ -52,7 +53,7 @@
  *          PubEvt/PostEvtSRT of TOS_EVTID_TEST_CMD_X4 * $_UT_CMD_X4_EVT_CNT(asCmdReq_toPalletObj)
  *          PubEvt/PostEvtSRT of TOS_EVTID_TEST_KEEPALIVE * $_UT_KEEPALIVE_EVT_CNT(asModAlive_toVMainObj)
  *          SubEvt/CbProcEvtSRT of TOS_EVTID_TEST_MSGDATA(asStateTransfer_fromVMainObj)
- *  TODO(@W)=[Case04]:...
+ *  TODO(@W)=[Case05]:...
  */
 
 #define _UT_OPERATOR_COUNT          6//UT_A[1,2]/_B/_C/_D/_E
