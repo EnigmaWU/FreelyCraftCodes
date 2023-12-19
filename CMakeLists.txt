@@ -45,6 +45,21 @@ endif()
 #add_subdirectory(Tools)
 
 ###############################################################################
+###===> PlatIF_IOC -> libPlatIOC
+set(LIB_IOC PlatIOC)
+file(GLOB LIB_IOC_SRCFILES PlatIF_IOC/*.c)
+add_library(${LIB_IOC} STATIC ${LIB_IOC_SRCFILES})
+
+if(CONFIG_BUILD_UNIT_TESTING)
+    enable_testing()
+    target_compile_definitions(${LIB_IOC} PRIVATE CONFIG_BUILD_WITH_UNIT_TESTING)
+
+    if(USE_UTFWK_GTEST)
+        add_subdirectory(PlatIF_IOC_UT_useGtest)
+    endif()
+endif()
+
+###############################################################################
 ### PlatIF_EVT -> libPlatEVT
 set(LIB_EVT PlatEVT)
 file(GLOB LIB_EVT_SRCFILES PlatIF_EVT/*.c)
