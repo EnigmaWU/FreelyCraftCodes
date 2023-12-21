@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -60,6 +61,23 @@ typedef enum
     TOS_RESULT_BUG = -100,
 } TOS_Result_T;
 
-typedef uint64_t TOS_BaseObjectID_T;
+typedef enum
+{
+    TOS_BOOL_FALSE = 0,
+    TOS_BOOL_TRUE = 1,
+} TOS_Bool_T;
 
+typedef uint32_t TOS_BaseID32_T;
+typedef uint64_t TOS_BaseID64_T;
+
+#if __SIZEOF_POINTER__ == 8
+    typedef TOS_BaseID64_T TOS_BaseObjectID_T;
+#elif __SIZEOF_POINTER__ == 4
+    typedef TOS_BaseID32_T TOS_BaseObjectID_T;
+#else
+    #error "Unsupported pointer size"
 #endif
+
+typedef TOS_BaseObjectID_T TOS_ModuleObjectID_T;
+
+#endif//__TOS_BASE_OBJECT_TYPES_H__

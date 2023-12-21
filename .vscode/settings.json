@@ -4,9 +4,6 @@
 
     "cmake.configureArgs": [
         "-DCMAKE_OSX_ARCHITECTURES=arm64",
-        "-DUSE_UTFWK_CMOCKA:BOOL=OFF",
-        "-DUSE_UTFWK_CRITERION:BOOL=OFF",
-        "-DUSE_UTFWK_GTEST:BOOL=ON",
     ],
 
     "cmake.debugConfig": {
