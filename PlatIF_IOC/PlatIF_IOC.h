@@ -26,11 +26,20 @@
  *      CMD is SYNC and DGRAM defined by IOC identified by CmdID;
  *      EVT is ASYNC and DGRAM defined by IOC identified by EvtID; 
  *      DAT is ASNYC and STREAM defined by IOC knowns only by object pair;
+ *    
+ *:->Link+MSG has Single or Hybrid Mode(a.k.a S-Mode vs H-Mode).
+ *      S-Mode: means a $LinkID ONLY used by ONE of execCMD or postEVT or sendDAT.
+ *          This S-Mode is enabled by default, equals to CONFIG_BUILD_ENABLE_IOC_LINK_SINGLE_MODE.
+ *      H-Mode: means a $LinkID MAY used by ANY execCMD or postEVT or sendDAT.
+ *          This H-Mode is enabled by CONFIG_BUILD_ENABLE_IOC_LINK_HYBRID_MODE.
  *
- *:->Call flow examples of ConMode:
+ *:->Notes:
+ *      ...
+ *
+ *:->Call flow typical examples of ConMode:
  *  [1]: ObjX as service, accept connection from ObjY, and ObjX ask ObjY to execute commands.
- *      ObjX: PLT_IOC_onlineService($SrvURL) -> $SrvID_atObjX
- *      ObjY: PLT_IOC_connectService($SrvURL) -> $LinkID_atObjY
+ *      ObjX: PLT_IOC_onlineService($SrvArgs::SrvURL) -> $SrvID_atObjX
+ *      ObjY: PLT_IOC_connectService($LinkArgs::SrvURL) -> $LinkID_atObjY
  *        |~> ObjX: PLT_IOC_acceptService($SrvID_atObjX) -> $LinkID_atObjX
  *      ObjX: PLT_IOC_execCMD($LinkID_atObjX, $CmdID) -> ...
  *        |~> ObjY: PLT_IOC_recvCMD($LinkID_atObjY) -> $CmdID ... $CmdResult -> PLT_IOC_ackCMD($LinkID_atObjY)
@@ -38,33 +47,21 @@
  *      ObjX: PLT_IOC_closeLink($LinkID_atObjX)
  *      ObjY: PLT_IOC_closeLink($LinkID_atObjY)
  *      ObjX: PLT_IOC_offlineService($SrvID_atObjX)
- *  [2]
- *      TODO(@W)
+ *  [2]: TODO(@W)
+ *  [3]: TODO(@W)
+ *      ...
  *
- *:->Call flow examples of ConlesMode:
+ *:->Call flow typical examples of ConlesMode:
  *  [1]: ObjX subscribe EVT, ObjY post EVT, ObjX process EVT.
  *      ObjX: PLT_IOC_subEVT($AnonyLinkID, $EvtID, $OnEvtProc_F)
  *      ObjY: PLT_IOC_postEVT($AnonyLinkID, $EvtID)
  *        |~> ObjX: $OnEvtProc_F($EvtID)
  *      ObjX: PLT_IOC_unsubEVT($AnonyLinkID)
- *  [2]
- *      TODO(@W)
+ *  [2]: TODO(@W)
+ *  [3]: TODO(@W)
+ *      ...
  */
 
- /**
-  * @brief FSM of IOC Module from Manager's view
-  *     TODO(@W)
-  */
-
-/**
- * @brief FSM of Service in IOC from User such as ObjXYZ's view
- *  TODO(@W)
- */
-
-/**
- * @brief FSM of Link in IOC from User such as ObjXYZ's view
- *  TODO(@W)
- */
 
 //#include "PlatIF_IOC_Types.h"
 //#include "PlatIF_IOC_Interfaces.h"
@@ -76,6 +73,64 @@ extern "C" {
 #endif
 
 //===> Types
+
+
+ /**
+  * @brief FSM of IOC Module from Manager's view
+  *     <ACT:initModuel> -> [STATE:ModuleStateIniting]
+  *         |-> <EVT:initModuleSuccess> -> [STATE:ModuleStateReady]
+  *         |-> <EVT:initModuleFailed>  -> [STATE:ModuleStateExcepted]
+  * 
+  *     [STATE:ModuleStateReady] -> <ACT:deinitModule> -> [STATE:ModuleStateDeiniting]
+  *         |-> <EVT:deinitModuleSuccess> -> [STATE:ModuleStateDeinited]
+  *         |-> <EVT:deinitModuleFailed>  -> [STATE:ModuleStateExcepted]
+  *
+  *     [STATE:ModuleStateReady] -> <ACT:online/connectService> -(IF:RefCnt==0)-> [STATE:ModuleStateReady2Busy]
+  *         |-> <EVT:online/connectServiceSuccess> -> [STATE:ModuleStateBusy(RefCnt=1)]
+  *         |-> <EVT:onlineServiceFailed>  -> [STATE:ModuleStateReady]
+  *     
+  *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt==1)-> [STATE:ModuleStateBusy2Ready]
+  *         |-> <EVT:offlineService/closeLinkSuccess> -> [STATE:ModuleStateReady(RefCnt=0)]
+  *         |-> <EVT:offlineService/closeLinkFailed>  -> [STATE:ModuleStateBusy]
+  *
+  *     [STATE:ModuleStateBusy] -> <ACT:online/connectService> -(IF:RefCnt>=1)-> [STATE:ModuleStateBusy]
+  *         |-> <EVT:online/connectServiceSuccess> -> [STATE:ModuleStateBusy(RefCnt+=1)]
+  *         |-> <EVT:online/connectServiceFailed>  -> [STATE:ModuleStateBusy]
+  *
+  *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt>1)-> [STATE:ModuleStateBusy]
+  *         |-> <EVT:offlineService/closeLinkSuccess> -> [STATE:ModuleStateBusy(RefCnt-=1)]
+  *         |-> <EVT:offlineService/closeLinkFailed>  -> [STATE:ModuleStateBusy]
+  */
+
+typedef enum 
+{
+    IOC_ModuleStateIniting = 1,
+    IOC_ModuleStateReady,
+    IOC_ModuleStateReady2Busy,
+    IOC_ModuleStateBusy,
+    IOC_ModuleStateBusy2Ready,
+    IOC_ModuleStateDeiniting,
+    IOC_ModuleStateDeinited,
+    IOC_ModuleStateExcepted,
+} IOC_ModuleStateValue_T;
+
+/**
+ * @brief FSM of Service in IOC from User such as ObjXYZ's view
+ *  TODO(@W)
+ */
+typedef enum 
+{
+
+} IOC_ServiceStateValue_T;
+
+/**
+ * @brief FSM of Link in IOC from User such as ObjXYZ's view
+ *  TODO(@W)
+ */
+typedef enum 
+{
+
+} IOC_LinkStateValue_T;
 
 typedef struct 
 {
@@ -94,6 +149,11 @@ typedef struct
 {
     const char *pSrvURL;
 } IOC_SrvArgs_T, *IOC_SrvArgs_pT;
+
+typedef struct 
+{
+    const char *pSrvURL;
+} IOC_LinkArgs_T, *IOC_LinkArgs_pT;
 
 typedef struct
 {
@@ -143,34 +203,67 @@ typedef struct
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //===> APIs for ConMode only 
-TOS_Result_T PLT_IOC_initModule(/*ARG_OUT*/TOS_ModuleObjectID_T *pModObjID, /*ARG_IN*/const IOC_ModuleArgs_pT pModArgs);
+TOS_Result_T PLT_IOC_initModule(
+    /*ARG_OUT*/TOS_ModuleObjectID_T *pModObjID, 
+    /*ARG_IN*/const IOC_ModuleArgs_pT pModArgs);
 TOS_Result_T PLT_IOC_deinitModule(/*ARG_IN*/TOS_ModuleObjectID_T ModObjID);
 
-//ConMode: Dynamic Service
-TOS_Result_T PLT_IOC_onlineService(/*ARG_OUT*/IOC_ServiceID_T *pSrvID, /*ARG_IN*/const IOC_SrvArgs_pT pSrvArgs);
-TOS_Result_T PLT_IOC_acceptService(/*ARG_IN*/IOC_ServiceID_T SrvID, /*ARG_OUT*/IOC_LinkID_T *pLinkID);
+//---> ConMode: Dynamic Service
+TOS_Result_T PLT_IOC_onlineService(
+    /*ARG_OUT*/IOC_ServiceID_T *pSrvID, 
+    /*ARG_IN*/const IOC_SrvArgs_pT pSrvArgs);
+TOS_Result_T PLT_IOC_acceptService(
+    /*ARG_IN*/IOC_ServiceID_T SrvID, 
+    /*ARG_OUT*/IOC_LinkID_T *pLinkID,
+    /*ARG_IN_OPTIONAL*/IOC_Options_pT pOptions);
 TOS_Result_T PLT_IOC_offlineService(/*ARG_IN*/IOC_ServiceID_T SrvID);
 
-//ConMode: Static Service
+//---> ConMode: Static Service
 //TODO(@W): #define PLT_IOC_defineService(pSrvArgs)
 
-TOS_Result_T PLT_IOC_connectService(/*ARG_OUT*/IOC_LinkID_T *pLinkID, /*ARG_IN*/const IOC_SrvArgs_pT pSrvArgs,/*ARG_IN_OPTIONAL*/IOC_Options_pT pOptions);
-TOS_Result_T PLT_IOC_disconnectService(/*ARG_IN*/IOC_LinkID_T LinkID);
+TOS_Result_T PLT_IOC_connectService(
+    /*ARG_OUT*/IOC_LinkID_T *pLinkID, 
+    /*ARG_IN*/const IOC_LinkArgs_pT pLinkArgs,
+    /*ARG_IN_OPTIONAL*/IOC_Options_pT pOptions);
+TOS_Result_T PLT_IOC_closeLink(/*ARG_IN*/IOC_LinkID_T LinkID);
 
-TOS_Result_T PLT_IOC_execCMD(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_CmdDesc_pT pCmdDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
-TOS_Result_T PLT_IOC_waitCMD(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_OUT*/IOC_CmdDesc_pT pCmdDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
-TOS_Result_T PLT_IOC_ackCMD(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_CmdDesc_pT pCmdDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_execCMD(
+    /*ARG_IN*/IOC_LinkID_T LinkID, 
+    /*ARG_IN*/const IOC_CmdDesc_pT pCmdDesc,
+    /*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_waitCMD(
+    /*ARG_IN*/IOC_LinkID_T LinkID, 
+    /*ARG_OUT*/IOC_CmdDesc_pT pCmdDesc,
+    /*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_ackCMD(
+    /*ARG_IN*/IOC_LinkID_T LinkID, 
+    /*ARG_IN*/const IOC_CmdDesc_pT pCmdDesc,
+    /*ARG_IN_OPTIONAL*/IOC_Options_pT);
 
-TOS_Result_T PLT_IOC_sendDAT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/IOC_DatDesc_pT,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
-TOS_Result_T PLT_IOC_recvDAT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_OUT*/IOC_DatDesc_pT,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_sendDAT(
+    /*ARG_IN*/IOC_LinkID_T LinkID, 
+    /*ARG_IN*/IOC_DatDesc_pT,
+    /*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_recvDAT(
+    /*ARG_IN*/IOC_LinkID_T LinkID, 
+    /*ARG_OUT*/IOC_DatDesc_pT,
+    /*ARG_IN_OPTIONAL*/IOC_Options_pT);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //===> APIs for both ConMode and ConlesMode
-TOS_Result_T PLT_IOC_postEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_EvtDesc_pT pEvtDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
-TOS_Result_T PLT_IOC_listenEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_OUT*/IOC_EvtDesc_pT pEvtDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_postEVT(
+    /*ARG_IN*/IOC_LinkID_T LinkID, 
+    /*ARG_IN*/const IOC_EvtDesc_pT pEvtDesc,
+    /*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_listenEVT(
+    /*ARG_IN*/IOC_LinkID_T LinkID, 
+    /*ARG_OUT*/IOC_EvtDesc_pT pEvtDesc,
+    /*ARG_IN_OPTIONAL*/IOC_Options_pT);
 
 //TOS_Result_T PLT_IOC_pubEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_EvtPubArgs_pT pEvtPubArgs);
-TOS_Result_T PLT_IOC_subEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_EvtSubArgs_pT pEvtSubArgs);
+TOS_Result_T PLT_IOC_subEVT(
+    /*ARG_IN*/IOC_LinkID_T LinkID, 
+    /*ARG_IN*/const IOC_EvtSubArgs_pT pEvtSubArgs);
 TOS_Result_T PLT_IOC_unsubEVT(/*ARG_IN*/IOC_LinkID_T LinkID);
 
 #ifdef __cplusplus
