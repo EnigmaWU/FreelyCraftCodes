@@ -10,7 +10,7 @@
  *
  *:->Communicate has Connect or Connectless Mode(a.k.a ConMode ConlesMode).
  *      ConMode: 
- *          [1] ObjX MUST call PLT_IOC_onlineService to online a service and identfied as $SrvID.
+ *          [1] ObjX MUST call PLT_IOC_onlineService to online a service with $SrvArgs and identfied as $SrvID.
  *          [2] ObjY MUST call PLT_IOC_connectService to establish a connection to that service and identified as $LinkID,
  *          [3.1] ObjX call PLT_IOC_execCMD with $LinkID to ask ObjY execute commands and get result, or ObjY call PLT_IOC_execCMD.
  *          [3.2] ObjX call PLT_IOC_postEVT with $LinkID to notify ObjY something happened, or ObjY call PLT_IOC_postEVT.
@@ -20,7 +20,7 @@
  *
  *      In ConMode service has dynamic or static online mode:
  *          [D] Dynamic: ObjX call PLT_IOC_onlineService in its context to online a service and identfied as $SrvID,
- *          [S] Static: ObjX use PLT_IOC_defineService in its source to define and identfied by $SrvURL. 
+ *          [S] Static: ObjX use PLT_IOC_defineService in its source to define and identfied by $SrvArgs::SrvURL. 
  *
  *:->MSG is a Command(a.k.a CMD) or Event(a.k.a EVT) or Data(a.k.a DAT).
  *      CMD is SYNC and DGRAM defined by IOC identified by CmdID;
@@ -123,6 +123,11 @@ typedef struct
 typedef struct 
 {
     long RZVD;
+} IOC_DatDesc_T, *IOC_DatDesc_pT;
+
+typedef struct 
+{
+    long RZVD;
 } IOC_EvtPubArgs_T, *IOC_EvtPubArgs_pT;
 
 typedef struct 
@@ -130,24 +135,39 @@ typedef struct
     long RZVD;
 } IOC_EvtSubArgs_T, *IOC_EvtSubArgs_pT;
 
+typedef struct 
+{
+    //OPT: Timeout,NonBlock,MayDrop, ...
+    long RZVD;
+} IOC_Options_T, *IOC_Options_pT;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //===> APIs for ConMode only 
 TOS_Result_T PLT_IOC_initModule(/*ARG_OUT*/TOS_ModuleObjectID_T *pModObjID, /*ARG_IN*/const IOC_ModuleArgs_pT pModArgs);
 TOS_Result_T PLT_IOC_deinitModule(/*ARG_IN*/TOS_ModuleObjectID_T ModObjID);
 
+//ConMode: Dynamic Service
 TOS_Result_T PLT_IOC_onlineService(/*ARG_OUT*/IOC_ServiceID_T *pSrvID, /*ARG_IN*/const IOC_SrvArgs_pT pSrvArgs);
 TOS_Result_T PLT_IOC_acceptService(/*ARG_IN*/IOC_ServiceID_T SrvID, /*ARG_OUT*/IOC_LinkID_T *pLinkID);
 TOS_Result_T PLT_IOC_offlineService(/*ARG_IN*/IOC_ServiceID_T SrvID);
 
-TOS_Result_T PLT_IOC_connectService(/*ARG_OUT*/IOC_LinkID_T *pLinkID, /*ARG_IN*/const IOC_SrvArgs_pT pSrvArgs);
+//ConMode: Static Service
+//TODO(@W): #define PLT_IOC_defineService(pSrvArgs)
+
+TOS_Result_T PLT_IOC_connectService(/*ARG_OUT*/IOC_LinkID_T *pLinkID, /*ARG_IN*/const IOC_SrvArgs_pT pSrvArgs,/*ARG_IN_OPTIONAL*/IOC_Options_pT pOptions);
 TOS_Result_T PLT_IOC_disconnectService(/*ARG_IN*/IOC_LinkID_T LinkID);
 
-TOS_Result_T PLT_IOC_execCMD(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_CmdDesc_pT pCmdDesc);
-TOS_Result_T PLT_IOC_recvCMD(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_OUT*/IOC_CmdDesc_pT pCmdDesc);
-TOS_Result_T PLT_IOC_ackCMD(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_CmdDesc_pT pCmdDesc);
+TOS_Result_T PLT_IOC_execCMD(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_CmdDesc_pT pCmdDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_waitCMD(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_OUT*/IOC_CmdDesc_pT pCmdDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_ackCMD(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_CmdDesc_pT pCmdDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
 
+TOS_Result_T PLT_IOC_sendDAT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/IOC_DatDesc_pT,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_recvDAT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_OUT*/IOC_DatDesc_pT,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //===> APIs for both ConMode and ConlesMode
-TOS_Result_T PLT_IOC_postEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_EvtDesc_pT pEvtDesc);
-TOS_Result_T PLT_IOC_waitEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_OUT*/IOC_EvtDesc_pT pEvtDesc);
+TOS_Result_T PLT_IOC_postEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_EvtDesc_pT pEvtDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
+TOS_Result_T PLT_IOC_listenEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_OUT*/IOC_EvtDesc_pT pEvtDesc,/*ARG_IN_OPTIONAL*/IOC_Options_pT);
 
 //TOS_Result_T PLT_IOC_pubEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_EvtPubArgs_pT pEvtPubArgs);
 TOS_Result_T PLT_IOC_subEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_EvtSubArgs_pT pEvtSubArgs);
