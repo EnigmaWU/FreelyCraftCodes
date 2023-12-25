@@ -77,29 +77,35 @@ extern "C" {
 
  /**
   * @brief FSM of IOC Module from Manager's view
-  *     <ACT:initModuel> -> [STATE:ModuleStateIniting]
+  *     <ACT:initModuel> -> [<T>STATE:ModuleStateIniting]
   *         |-> <EVT:initModuleSuccess> -> [STATE:ModuleStateReady]
-  *         |-> <EVT:initModuleFailed>  -> [STATE:ModuleStateExcepted]
+  *         |-> <EVT:initModuleFailed>  -> [STATE:ModuleStateDeinited]
+  *         |-> <EVT:initModuleExcepted>-> [STATE:ModuleStateExcepted]
   * 
-  *     [STATE:ModuleStateReady] -> <ACT:deinitModule> -> [STATE:ModuleStateDeiniting]
+  *     [STATE:ModuleStateReady] -> <ACT:deinitModule> -> [<T>STATE:ModuleStateDeiniting]
   *         |-> <EVT:deinitModuleSuccess> -> [STATE:ModuleStateDeinited]
-  *         |-> <EVT:deinitModuleFailed>  -> [STATE:ModuleStateExcepted]
+  *         |-> <EVT:deinitModuleFailed>  -> [STATE:ModuleStateReady]
+  *         |-> <EVT:deinitModuleExcepted>-> [STATE:ModuleStateExcepted]
   *
-  *     [STATE:ModuleStateReady] -> <ACT:online/connectService> -(IF:RefCnt==0)-> [STATE:ModuleStateReady2Busy]
+  *     [STATE:ModuleStateReady] -> <ACT:online/connectService> -(IF:RefCnt==0)-> [<T>STATE:ModuleStateReady2Busy]
   *         |-> <EVT:online/connectServiceSuccess> -> [STATE:ModuleStateBusy(RefCnt=1)]
-  *         |-> <EVT:onlineServiceFailed>  -> [STATE:ModuleStateReady]
+  *         |-> <EVT:online/connectServiceFailed>  -> [STATE:ModuleStateReady]
+  *         |-> <EVT:online/connectServiceExcepted>-> [STATE:ModuleStateExcepted]
   *     
-  *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt==1)-> [STATE:ModuleStateBusy2Ready]
+  *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt==1)-> [<T>STATE:ModuleStateBusy2Ready]
   *         |-> <EVT:offlineService/closeLinkSuccess> -> [STATE:ModuleStateReady(RefCnt=0)]
   *         |-> <EVT:offlineService/closeLinkFailed>  -> [STATE:ModuleStateBusy]
+  *         |-> <EVT:offlineService/closeLinkExcepted>-> [STATE:ModuleStateExcepted]
   *
-  *     [STATE:ModuleStateBusy] -> <ACT:online/connectService> -(IF:RefCnt>=1)-> [STATE:ModuleStateBusy]
+  *     [STATE:ModuleStateBusy] -> <ACT:online/connectService> -(IF:RefCnt>=1)-> [<T>STATE:ModuleStateBusy]
   *         |-> <EVT:online/connectServiceSuccess> -> [STATE:ModuleStateBusy(RefCnt+=1)]
   *         |-> <EVT:online/connectServiceFailed>  -> [STATE:ModuleStateBusy]
+  *         |-> <EVT:online/connectServiceExcepted>-> [STATE:ModuleStateExcepted]
   *
-  *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt>1)-> [STATE:ModuleStateBusy]
+  *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt>1)-> [<T>STATE:ModuleStateBusy]
   *         |-> <EVT:offlineService/closeLinkSuccess> -> [STATE:ModuleStateBusy(RefCnt-=1)]
   *         |-> <EVT:offlineService/closeLinkFailed>  -> [STATE:ModuleStateBusy]
+  *         |-> <EVT:offlineService/closeLinkExcepted>-> [STATE:ModuleStateExcepted]
   */
 
 typedef enum 
