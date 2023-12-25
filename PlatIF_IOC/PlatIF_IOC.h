@@ -4,26 +4,30 @@
 /**
  * @brief IOC = Inter-Object Communication
  *  This module is used to communicate between Objects.
- *  Object is a abstract concept here, it a struct/class instance in System/Process/Thread.
+ *  Object here is a abstract concept, it is a struct/class instance in a System/Process/Thread.
  *  Object will be instanced as ObjX/ObjY/ObjZ, who will call IOC's API to communicate with other in Message(a.k.a MSG),
  *      such as ObjX send a MSG to ObjY, who processed MSG and send a new MSG to ObjZ.
  *
- *  Communicate use Connect or Connectless mode(a.k.a ConMode ConlesMode).
+ *:->Communicate has Connect or Connectless Mode(a.k.a ConMode ConlesMode).
  *      ConMode: 
- *          [1] ObjX MUST call PLT_IOC_onlineService firstly ton online a service and identfied as $SrvID.
+ *          [1] ObjX MUST call PLT_IOC_onlineService to online a service and identfied as $SrvID.
  *          [2] ObjY MUST call PLT_IOC_connectService to establish a connection to that service and identified as $LinkID,
- *          [3.1] ObjX call PLT_IOC_execCMD with $LinkID to ask ObjY execute commands and get result, or ObjX call PLT_IOC_execCMD.
- *          [3.2] ObjX call PLT_IOC_postEVT with $LinkID to notify ObjY something happened, or ObjX call PLT_IOC_postEVT.
- *          [3.2] ObjX call PLT_IOC_sendDAT with $LinkID to send data to ObjY, or ObjX call PLT_IOC_recvDAT.
+ *          [3.1] ObjX call PLT_IOC_execCMD with $LinkID to ask ObjY execute commands and get result, or ObjY call PLT_IOC_execCMD.
+ *          [3.2] ObjX call PLT_IOC_postEVT with $LinkID to notify ObjY something happened, or ObjY call PLT_IOC_postEVT.
+ *          [3.2] ObjX call PLT_IOC_sendDAT with $LinkID to send data to ObjY, or ObjY call PLT_IOC_sendDAT.
  *      ConlesMode: ObjX call PLT_IOC_postEVT with pre-defined $AnonyLinkID to notify all ObjYZs,
  *          who call PLT_IOC_waitEVT or PLT_IOC_subEVT, without PLT_IOC_onlineService and PLT_IOC_connectService.
  *
- *  MSG is a Command(a.k.a CMD) or Event(a.k.a EVT) or Data(a.k.a DAT).
+ *      In ConMode service has dynamic or static online mode:
+ *          [D] Dynamic: ObjX call PLT_IOC_onlineService in its context to online a service and identfied as $SrvID,
+ *          [S] Static: ObjX use PLT_IOC_defineService in its source to define and identfied by $SrvURL. 
+ *
+ *:->MSG is a Command(a.k.a CMD) or Event(a.k.a EVT) or Data(a.k.a DAT).
  *      CMD is SYNC and DGRAM defined by IOC identified by CmdID;
  *      EVT is ASYNC and DGRAM defined by IOC identified by EvtID; 
  *      DAT is ASNYC and STREAM defined by IOC knowns only by object pair;
  *
- *  Call flow examples of ConMode:
+ *:->Call flow examples of ConMode:
  *  [1]: ObjX as service, accept connection from ObjY, and ObjX ask ObjY to execute commands.
  *      ObjX: PLT_IOC_onlineService($SrvURL) -> $SrvID_atObjX
  *      ObjY: PLT_IOC_connectService($SrvURL) -> $LinkID_atObjY
@@ -37,7 +41,7 @@
  *  [2]
  *      TODO(@W)
  *
- *  Call flow examples of ConlesMode:
+ *:->Call flow examples of ConlesMode:
  *  [1]: ObjX subscribe EVT, ObjY post EVT, ObjX process EVT.
  *      ObjX: PLT_IOC_subEVT($AnonyLinkID, $EvtID, $OnEvtProc_F)
  *      ObjY: PLT_IOC_postEVT($AnonyLinkID, $EvtID)
