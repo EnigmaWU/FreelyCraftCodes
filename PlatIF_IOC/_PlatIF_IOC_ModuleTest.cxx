@@ -21,7 +21,7 @@ TOS_Result_T PLT_IOC_deinitModule(TOS_ModuleObjectID_T ModObjID)
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//===> BEGIN of UT in CXX
+//===> BEGIN of IOC_Module's internal UT in CXX
 #ifdef CONFIG_BUILD_INFILE_UNIT_TESTING_USE_UTFWK_GTEST
 #include <gtest/gtest.h>
 TEST(IOC_Module, initWithNullArgs)

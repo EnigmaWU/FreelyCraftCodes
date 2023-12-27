@@ -55,4 +55,8 @@
         "--background-index-priority=normal",
         "--clang-tidy",
     ],
+
+
+    "editor.formatOnSave": false,
+    "editor.formatOnSaveMode": "modificationsIfAvailable",
 }

@@ -70,14 +70,14 @@ if(CONFIG_BUILD_UNIT_TESTING)
         find_library(LIBGTST_MAIN gtest_main)
 
         file(GLOB LIB_IOC_TEST_SRCFILES PlatIF_IOC/*Test.cxx)
-        add_executable(${LIB_IOC}_UT ${LIB_IOC_TEST_SRCFILES})
+        add_executable(UT_INTNAL_${LIB_IOC} ${LIB_IOC_TEST_SRCFILES})
 
-        target_include_directories(${LIB_IOC}_UT PRIVATE ${INCGTST})
-        target_compile_definitions(${LIB_IOC}_UT PRIVATE 
+        target_include_directories(UT_INTNAL_${LIB_IOC} PRIVATE ${INCGTST})
+        target_compile_definitions(UT_INTNAL_${LIB_IOC} PRIVATE 
             CONFIG_BUILD_WITH_UNIT_TESTING CONFIG_BUILD_INFILE_UNIT_TESTING_USE_UTFWK_GTEST)
-        target_link_libraries(${LIB_IOC}_UT ${LIBGTST} ${LIBGTST_MAIN})
+        target_link_libraries(UT_INTNAL_${LIB_IOC} ${LIBGTST} ${LIBGTST_MAIN})
 
-        add_test(NAME ${LIB_IOC}_UT COMMAND ${LIB_IOC}_UT)
+        add_test(NAME UT_INTNAL_${LIB_IOC} COMMAND UT_INTNAL_${LIB_IOC})
     endif()
 endif()
 

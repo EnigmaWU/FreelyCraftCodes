@@ -53,9 +53,9 @@
  *
  *:->Call flow typical examples of ConlesMode:
  *  [1]: ObjX subscribe EVT, ObjY post EVT, ObjX process EVT.
- *      ObjX: PLT_IOC_subEVT($AnonyLinkID, $EvtID, $OnEvtProc_F)
- *      ObjY: PLT_IOC_postEVT($AnonyLinkID, $EvtID)
- *        |~> ObjX: $OnEvtProc_F($EvtID)
+ *      ObjX: PLT_IOC_subEVT($AnonyLinkID, $EvtDesc::[EvtID, $CbProcEvt_F])
+ *      ObjY: PLT_IOC_postEVT($AnonyLinkID, $EvtDesc::EvtID)
+ *        |~> ObjX: $CbPrcEvt_F($EvtID)
  *      ObjX: PLT_IOC_unsubEVT($AnonyLinkID)
  *  [2]: TODO(@W)
  *  [3]: TODO(@W)
@@ -126,7 +126,7 @@ typedef enum
  */
 typedef enum 
 {
-
+    RZVD1,
 } IOC_ServiceStateValue_T;
 
 /**
@@ -135,8 +135,13 @@ typedef enum
  */
 typedef enum 
 {
-
+    RZVD2,
 } IOC_LinkStateValue_T;
+
+enum IOC_PreDefinedConst
+{
+    IOC_CONLESMODE_ANONYMOUS_LINK_ID = 0x20231227UL,
+};
 
 typedef struct 
 {
@@ -146,7 +151,7 @@ typedef struct
 
 typedef TOS_BaseObjectID_T      IOC_ServiceID_T;
 typedef TOS_BaseObjectID_T      IOC_LinkID_T;
-#define AnonyLinkID             ((IOC_LinkID_T)0x20231221UL)
+//#define AnonyLinkID             ((IOC_LinkID_T)0x20231221UL)
 
 typedef TOS_BaseID64_T          IOC_CmdID_T;
 typedef TOS_BaseID64_T          IOC_EvtID_T;
