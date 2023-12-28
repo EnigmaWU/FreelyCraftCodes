@@ -57,6 +57,6 @@
     ],
 
 
-    "editor.formatOnSave": false,
-    "editor.formatOnSaveMode": "modificationsIfAvailable",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "modifications",
 }
