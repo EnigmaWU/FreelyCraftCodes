@@ -9,7 +9,6 @@
 //-Step5: EvtPuber postEVT(EvtID==IOC_EVTID_TEST_KEEPALIVE * $_UT_EVTCNT_KEEPALIVE) again
 //-Step6:EvtSuber's EvtArgs::CbProcEvt_F is NOT called more, stile $_UT_EVTCNT_KEEPALIVE times
 
-//===>Case[02]: ...
 #define _UT_EVTCNT_KEEPALIVE 1024
 
 typedef struct _UT_Case01_EvtSuberPriv_T {
@@ -59,3 +58,23 @@ TEST(EventConlesModeTypical, Case01) {
   //===>Step6:EvtSuber's EvtArgs::CbProcEvt_F is NOT called
   ASSERT_EQ(_UT_EVTCNT_KEEPALIVE, EvtSuberPriv.KeepAliveEvtCnt);  //@CheckPoint
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//===>Case[02]: Ref::ConlesMode's call flow typical example[2] in PlatIF_IOC.h
+// Step-1: ObjA as EvtSuber subEvt(EvtID==IOC_EVTID_TEST_KEEPALIVE/MOVE_VERTICAL_ACK/MOVE_HORIZONTAL_ACK/COLLISION_DETECTED_ACK)
+// Step-2: ObjC as EvtSuber subEvt(EvtID==IOC_EVTID_TEST_MOVE_VERTICAL/COILLISION_DETECTED),
+//          postEVT(EvtID==IOC_EVTID_TEST_MOVE_VERTICAL_ACK/COLLISION_DETECTED_ACK) in EvtArgs::CbProcEvt_F,
+//          and start a thread named "ObjC_Thread" to postEvt(EvtID==IOC_EVTID_TEST_KEEPALIVE) every 1ms*$_UT_EVTCNT_KEEPALIVE
+// Step-3: ObjD as EvtSuber subEvt(EvtID==IOC_EVTID_TEST_MOVE_HORIZONTAL/COILLISION_DETECTED),
+//          postEVT(EvtID==IOC_EVTID_TEST_MOVE_HORIZONTAL_ACK/COLLISION_DETECTED_ACK) in EvtArgs::CbProcEvt_F,
+//          and start a thread named "ObjD_Thread" to postEvt(EvtID==IOC_EVTID_TEST_KEEPALIVE) every 1ms*$_UT_EVTCNT_KEEPALIVE
+// Step-4: ObjB as EvtPuber postEVT(EvtID==IOC_EVTID_TEST_MOVE_VERTICAL/IOC_EVTID_TEST_MOVE_HORIZONTAL)
+//          in a thread named "ObjB_Thread1" every 1ms*$_UT_EVTCNT_MOVE_VERTICAL/$_UT_EVTCNT_MOVE_HORIZONTAL,
+//          and start a thread named "ObjB_Thread2" to postEVT(EvtID==IOC_EVTID_TEST_KEEPALIVE) every 1ms*$_UT_EVTCNT_KEEPALIVE
+// Step-5: ObjE as EvtPuber postEVT(EvtID==IOC_EVTID_TEST_COLLISION_DETECTED) in a thread named "ObjE_Thread1"
+//        every 1ms*$_UT_EVTCNT_COLLISION_DETECTED, and start a thread named "ObjE_Thread2" to
+//        postEVT(EvtID==IOC_EVTID_TEST_KEEPALIVE) every 1ms*$_UT_EVTCNT_KEEPALIVE
+
+#define _UT_EVTCNT_MOVE_VERTICAL 1024
+#define _UT_EVTCNT_MOVE_HORIZONTAL 1024
+#define _UT_EVTCNT_COLLISION_DETECTED 1024

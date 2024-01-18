@@ -3,4 +3,4 @@
 Language:        Cpp
 BasedOnStyle:  Google
 
-ColumnLimit: 120
+ColumnLimit: 132

@@ -59,7 +59,20 @@
  *      ObjY: PLT_IOC_postEVT($AutoLinkID, $EvtDesc::EvtID)
  *        |~> ObjX: $CbPrcEvt_F($EvtID)
  *      ObjX: PLT_IOC_unsubEVT($AutoLinkID)
- *  [2]: TODO(@W)
+ *
+ *  [2]: Obj[A-E], ObjA is MainStateObject, ObjB is RemoteCommandObject, ObjC is VerticalMoveObject,
+ *          ObjD is HorizontalMoveObject, ObjE is CollisionDetectObject.
+ *      ObjA: PLT_IOC_subEvt from ObjB/E of EvtID_KEEPALIVE,
+ *          from ObjC of EvtID_KEEPALIVE/EvtID_MOVE_VERTICAL_ACK/EvtID_COLLISION_DETECT_ACK,
+ *          from ObjD of EvtID_KEEPALIVE/EvtID_MOVE_HORIZONTAL_ACK/EvtID_COLLISION_DETECT_ACK.
+ *      ObjB: PLT_IOC_postEVT to ObjA of EvtID_KEEPALIVE, to ObjC of EvtID_MOVE_VERTICAL,
+ *          to ObjD of EvtID_MOVE_HORIZONTAL.
+ *      ObjC: PLT_IOC_subEvt from ObjB of EvtID_MOVE_VERTICAL, from ObjE of EvtID_COLLISION_DETECT,
+ *          PLT_IOC_postEVT to ObjA of EvtID_KEEPALIVE/EvtID_MOVE_VERTICAL_ACK/EvtID_COLLISION_DETECT_ACK.
+ *      ObjD: PLT_IOC_subEvt from ObjB of EvtID_MOVE_HORIZONTAL, from ObjE of EvtID_COLLISION_DETECT,
+ *          PLT_IOC_postEVT to ObjA of EvtID_KEEPALIVE/EvtID_MOVE_HORIZONTAL_ACK/EvtID_COLLISION_DETECT_ACK.
+ *      ObjE: PLT_IOC_postEVT to ObjA of EvtID_KEEPALIVE, to ObjC/D of EvtID_COLLISION_DETECT.
+ *
  *  [3]: TODO(@W)
  *      ...
  */
