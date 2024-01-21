@@ -226,8 +226,8 @@ typedef struct
 } IOC_EvtSubArgs_T, *IOC_EvtSubArgs_pT;
 
 typedef struct {
-    unsigned long EvtNum;
-    IOC_EvtID_T *pEvtIDs;
+    IOC_CbProcEvt_F CbProcEvt_F;
+    void *pCbPriv;
 } IOC_EvtUnsubArgs_T, *IOC_EvtUnsubArgs_pT;
 
 typedef struct 

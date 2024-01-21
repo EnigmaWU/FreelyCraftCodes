@@ -1,4 +1,5 @@
-//THIS FILE IS PlatIF_IOC's PRIVATE HEADER FILE.
+// THIS FILE IS PlatIF_IOC's PRIVATE HEADER FILE.
+#include <pthread.h>
 #include <string.h>
 
 #include "PlatIF_IOC.h"
