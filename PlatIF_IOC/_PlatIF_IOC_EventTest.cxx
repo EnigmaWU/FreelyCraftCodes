@@ -26,7 +26,7 @@ static _IOC_ConslesEventContext_T _mConlesEvtCtx = {
 static TOS_Result_T __IOC_ConlesMode_subEVT(const IOC_EvtSubArgs_pT pEvtSubArgs) {
   int RetPSX = pthread_mutex_lock(&_mConlesEvtCtx.Mutex);
   if (RetPSX != 0) {
-    return TOS_RESULT_BUG;
+    return TOS_RESULT_NOT_TESTED_BUG;
   }
 
   if (_mConlesEvtCtx.CurSuberNum >= _mConlesEvtCtx.MaxSuberNum) {
@@ -38,7 +38,7 @@ static TOS_Result_T __IOC_ConlesMode_subEVT(const IOC_EvtSubArgs_pT pEvtSubArgs)
     _mConlesEvtCtx.pSuberArgs = (IOC_EvtSubArgs_pT)calloc(_mConlesEvtCtx.MaxSuberNum, sizeof(IOC_EvtSubArgs_T));
     if (_mConlesEvtCtx.pSuberArgs == NULL) {
       pthread_mutex_unlock(&_mConlesEvtCtx.Mutex);
-      return TOS_RESULT_NOT_ENOUGH_RESOURCE;
+      return TOS_RESULT_NOT_TESTED_BUG;
     }
   }
 
@@ -51,7 +51,7 @@ static TOS_Result_T __IOC_ConlesMode_subEVT(const IOC_EvtSubArgs_pT pEvtSubArgs)
 
   if (FreeSuberIdx == _mConlesEvtCtx.MaxSuberNum) {
     pthread_mutex_lock(&_mConlesEvtCtx.Mutex);
-    return TOS_RESULT_TOO_MANY_SUBED_EVENTS;
+    return TOS_RESULT_NOT_TESTED_BUG;
   }
 
   IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[FreeSuberIdx];
@@ -61,7 +61,7 @@ static TOS_Result_T __IOC_ConlesMode_subEVT(const IOC_EvtSubArgs_pT pEvtSubArgs)
   pSavdSubArgs->pEvtIDs = (IOC_EvtID_T*)malloc(SavdEvtIDSiz);
   if (pSavdSubArgs->pEvtIDs == NULL) {
     pthread_mutex_unlock(&_mConlesEvtCtx.Mutex);
-    return TOS_RESULT_NOT_ENOUGH_RESOURCE;
+    return TOS_RESULT_NOT_TESTED_BUG;
   } else {
     memcpy(pSavdSubArgs->pEvtIDs, pEvtSubArgs->pEvtIDs, SavdEvtIDSiz);
   }
@@ -146,11 +146,56 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
 //===> BEGIN of internal UT for ConlesMod of Event in CXX
 #ifdef CONFIG_BUILD_INFILE_UNIT_TESTING_USE_UTFWK_GTEST
 #include <gtest/gtest.h>
-TEST(UT_INTNAL_ConlesMode, subEVT) {
-  // Write UT for __IOC_ConlesMode_subEVT
+TEST(EventConlesModeInternal, subEVT) {
+  //===>SETUP
+  _IOC_ConslesEventContext_T BackupCtx = _mConlesEvtCtx;
+
+  //===>EXECUTE
+  //--->CASE[01]: MaxSuberNum is 1, CurSuberNum is 0, SuberArgA will SUCCESS, SuberArgB will NOT_ENOUGH_RESOURCE
+  _mConlesEvtCtx.MaxSuberNum = 1;
+  _mConlesEvtCtx.CurSuberNum = 0;
+
+  IOC_EvtID_T EvtIDsA[] = {IOC_EVTID_TEST_KEEPALIVE};
+#define CbProcEvtA_F 0x01UL
+#define CbPrivA 0x02UL
+  IOC_EvtSubArgs_T SuberArgA = {
+      .CbProcEvt_F = (IOC_CbProcEvt_F)CbProcEvtA_F,
+      .pCbPriv = (void*)CbPrivA,
+      .EvtNum = 1,
+      .pEvtIDs = EvtIDsA,
+  };
+
+  TOS_Result_T Result = __IOC_ConlesMode_subEVT(&SuberArgA);
+  ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
+
+  IOC_EvtID_T EvtIDsB[] = {IOC_EVTID_TEST_KEEPALIVE};
+#define CbProcEvtB_F 0x03UL
+#define CbPrivB 0x04UL
+  IOC_EvtSubArgs_T SuberArgB = {
+      .CbProcEvt_F = (IOC_CbProcEvt_F)CbProcEvtB_F,
+      .pCbPriv = (void*)CbPrivB,
+      .EvtNum = 1,
+      .pEvtIDs = EvtIDsB,
+  };
+
+  Result = __IOC_ConlesMode_subEVT(&SuberArgB);
+  ASSERT_EQ(Result, TOS_RESULT_NOT_ENOUGH_RESOURCE);  // CheckPoint
+
+  //===>TEARDOWN
+  for (unsigned long Idx = 0; Idx < _mConlesEvtCtx.MaxSuberNum; Idx++) {
+    IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[Idx];
+    if (pSavdSubArgs->pEvtIDs != NULL) {
+      free(pSavdSubArgs->pEvtIDs);
+      pSavdSubArgs->CbProcEvt_F = NULL;
+    }
+  }
+
+  free(_mConlesEvtCtx.pSuberArgs);
+  _mConlesEvtCtx = BackupCtx;
 }
-TEST(UT_INTNAL_ConlesMode, unsubEVT) {}
-TEST(UT_INTNAL_ConlesMode, postEVT) {}
+
+// TEST(EventConlesModeInternal, unsubEVT) {}
+// TEST(EventConlesModeInternal, postEVT) {}
 #endif /* CONFIG_BUILD_INFILE_UNIT_TESTING_USE_UTFWK_GTEST */
 //===> END of internal UT for ConlesMod of Event in CXX
 

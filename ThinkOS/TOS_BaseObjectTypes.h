@@ -60,6 +60,7 @@ typedef enum {
   TOS_RESULT_NO_EVT_SUBER = -39,
 
   TOS_RESULT_BUG = -100,
+  TOS_RESULT_NOT_TESTED_BUG = -101,
 } TOS_Result_T;
 
 typedef enum
