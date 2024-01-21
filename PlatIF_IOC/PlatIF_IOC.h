@@ -85,39 +85,38 @@ extern "C" {
 
 //===> Types
 
-
- /**
-  * @brief FSM of IOC Module from Manager's view
-  *     <ACT:initModuel> -> [<T>STATE:ModuleStateIniting]
-  *         |-> <EVT:initModuleSuccess> -> [STATE:ModuleStateReady]
-  *         |-> <EVT:initModuleFailed>  -> [STATE:ModuleStateDeinited]
-  *         |-> <EVT:initModuleExcepted>-> [STATE:ModuleStateExcepted]
-  * 
-  *     [STATE:ModuleStateReady] -> <ACT:deinitModule> -> [<T>STATE:ModuleStateDeiniting]
-  *         |-> <EVT:deinitModuleSuccess> -> [STATE:ModuleStateDeinited]
-  *         |-> <EVT:deinitModuleFailed>  -> [STATE:ModuleStateReady]
-  *         |-> <EVT:deinitModuleExcepted>-> [STATE:ModuleStateExcepted]
-  *
-  *     [STATE:ModuleStateReady] -> <ACT:online/connectService> -(IF:RefCnt==0)-> [<T>STATE:ModuleStateReady2Busy]
-  *         |-> <EVT:online/connectServiceSuccess> -> [STATE:ModuleStateBusy(RefCnt=1)]
-  *         |-> <EVT:online/connectServiceFailed>  -> [STATE:ModuleStateReady]
-  *         |-> <EVT:online/connectServiceExcepted>-> [STATE:ModuleStateExcepted]
-  *     
-  *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt==1)-> [<T>STATE:ModuleStateBusy2Ready]
-  *         |-> <EVT:offlineService/closeLinkSuccess> -> [STATE:ModuleStateReady(RefCnt=0)]
-  *         |-> <EVT:offlineService/closeLinkFailed>  -> [STATE:ModuleStateBusy]
-  *         |-> <EVT:offlineService/closeLinkExcepted>-> [STATE:ModuleStateExcepted]
-  *
-  *     [STATE:ModuleStateBusy] -> <ACT:online/connectService> -(IF:RefCnt>=1)-> [<T>STATE:ModuleStateBusy]
-  *         |-> <EVT:online/connectServiceSuccess> -> [STATE:ModuleStateBusy(RefCnt+=1)]
-  *         |-> <EVT:online/connectServiceFailed>  -> [STATE:ModuleStateBusy]
-  *         |-> <EVT:online/connectServiceExcepted>-> [STATE:ModuleStateExcepted]
-  *
-  *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt>1)-> [<T>STATE:ModuleStateBusy]
-  *         |-> <EVT:offlineService/closeLinkSuccess> -> [STATE:ModuleStateBusy(RefCnt-=1)]
-  *         |-> <EVT:offlineService/closeLinkFailed>  -> [STATE:ModuleStateBusy]
-  *         |-> <EVT:offlineService/closeLinkExcepted>-> [STATE:ModuleStateExcepted]
-  */
+/**
+ * @brief FSM of IOC Module from Manager's view
+ *     <ACT:initModule> -> [<T>STATE:ModuleStateIniting]
+ *         |-> <EVT:initModuleSuccess> -> [STATE:ModuleStateReady]
+ *         |-> <EVT:initModuleFailed>  -> [STATE:ModuleStateDeinited]
+ *         |-> <EVT:initModuleExcepted>-> [STATE:ModuleStateExcepted]
+ *
+ *     [STATE:ModuleStateReady] -> <ACT:deinitModule> -> [<T>STATE:ModuleStateDeiniting]
+ *         |-> <EVT:deinitModuleSuccess> -> [STATE:ModuleStateDeinited]
+ *         |-> <EVT:deinitModuleFailed>  -> [STATE:ModuleStateReady]
+ *         |-> <EVT:deinitModuleExcepted>-> [STATE:ModuleStateExcepted]
+ *
+ *     [STATE:ModuleStateReady] -> <ACT:online/connectService> -(IF:RefCnt==0)-> [<T>STATE:ModuleStateReady2Busy]
+ *         |-> <EVT:online/connectServiceSuccess> -> [STATE:ModuleStateBusy(RefCnt=1)]
+ *         |-> <EVT:online/connectServiceFailed>  -> [STATE:ModuleStateReady]
+ *         |-> <EVT:online/connectServiceExcepted>-> [STATE:ModuleStateExcepted]
+ *
+ *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt==1)-> [<T>STATE:ModuleStateBusy2Ready]
+ *         |-> <EVT:offlineService/closeLinkSuccess> -> [STATE:ModuleStateReady(RefCnt=0)]
+ *         |-> <EVT:offlineService/closeLinkFailed>  -> [STATE:ModuleStateBusy]
+ *         |-> <EVT:offlineService/closeLinkExcepted>-> [STATE:ModuleStateExcepted]
+ *
+ *     [STATE:ModuleStateBusy] -> <ACT:online/connectService> -(IF:RefCnt>=1)-> [<T>STATE:ModuleStateBusy]
+ *         |-> <EVT:online/connectServiceSuccess> -> [STATE:ModuleStateBusy(RefCnt+=1)]
+ *         |-> <EVT:online/connectServiceFailed>  -> [STATE:ModuleStateBusy]
+ *         |-> <EVT:online/connectServiceExcepted>-> [STATE:ModuleStateExcepted]
+ *
+ *     [STATE:ModuleStateBusy] -> <ACT:offlineService/closeLink> -(IF:RefCnt>1)-> [<T>STATE:ModuleStateBusy]
+ *         |-> <EVT:offlineService/closeLinkSuccess> -> [STATE:ModuleStateBusy(RefCnt-=1)]
+ *         |-> <EVT:offlineService/closeLinkFailed>  -> [STATE:ModuleStateBusy]
+ *         |-> <EVT:offlineService/closeLinkExcepted>-> [STATE:ModuleStateExcepted]
+ */
 
 typedef enum 
 {
@@ -142,7 +141,10 @@ typedef enum
 
 /**
  * @brief FSM of Link in IOC from User such as ObjXYZ's view
- *  TODO(@W)
+ * TODO(@W): @ConetMode_of[CMD,EVT,DAT]:
+ *
+ * @ConlesMode_of[EVT]:
+ *
  */
 typedef enum 
 {
