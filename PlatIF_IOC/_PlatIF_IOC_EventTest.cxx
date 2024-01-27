@@ -78,9 +78,11 @@ static TOS_Result_T __IOC_ConlesMode_unsubEVT(const IOC_EvtUnsubArgs_pT pEvtUnsu
     return TOS_RESULT_BUG;
   }
 
+  TOS_Result_T Result = TOS_RESULT_NOT_FOUND;
+
   if (_mConlesEvtCtx.pSuberArgs == NULL) {
     pthread_mutex_unlock(&_mConlesEvtCtx.Mutex);
-    return TOS_RESULT_NOT_FOUND;
+    return Result;
   }
 
   if (pEvtUnsubArgs == NULL) {
@@ -88,15 +90,23 @@ static TOS_Result_T __IOC_ConlesMode_unsubEVT(const IOC_EvtUnsubArgs_pT pEvtUnsu
       IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[Idx];
       if (pSavdSubArgs->pEvtIDs != NULL) {
         free(pSavdSubArgs->pEvtIDs);
+        pSavdSubArgs->pEvtIDs = NULL;
         pSavdSubArgs->CbProcEvt_F = NULL;
       }
     }
+
+    _mConlesEvtCtx.CurSuberNum = 0;
+    Result = TOS_RESULT_SUCCESS;
   } else {
     for (unsigned long Idx = 0; Idx < _mConlesEvtCtx.CurSuberNum; Idx++) {
       IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[Idx];
       if (pSavdSubArgs->CbProcEvt_F == pEvtUnsubArgs->CbProcEvt_F && pSavdSubArgs->pCbPriv == pEvtUnsubArgs->pCbPriv) {
         free(pSavdSubArgs->pEvtIDs);
+        pSavdSubArgs->pEvtIDs = NULL;
         pSavdSubArgs->CbProcEvt_F = NULL;
+
+        _mConlesEvtCtx.CurSuberNum--;
+        Result = TOS_RESULT_SUCCESS;
         break;
       }
     }
@@ -146,23 +156,23 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
 //===> BEGIN of internal UT for ConlesMod of Event in CXX
 #ifdef CONFIG_BUILD_INFILE_UNIT_TESTING_USE_UTFWK_GTEST
 #include <gtest/gtest.h>
-TEST(EventConlesModeInternal, subEVT) {
+//--->CASE[01]: MaxSuberNum is 1, CurSuberNum is 0, SuberArgA will SUCCESS, SuberArgB will NOT_ENOUGH_RESOURCE
+TEST(EventConlesModeInternal, Case01_subEVT) {
   //===>SETUP
   _IOC_ConslesEventContext_T BackupCtx = _mConlesEvtCtx;
 
   //===>EXECUTE
-  //--->CASE[01]: MaxSuberNum is 1, CurSuberNum is 0, SuberArgA will SUCCESS, SuberArgB will NOT_ENOUGH_RESOURCE
   _mConlesEvtCtx.MaxSuberNum = 1;
   _mConlesEvtCtx.CurSuberNum = 0;
 
-  IOC_EvtID_T EvtIDsA[] = {IOC_EVTID_TEST_KEEPALIVE};
+  IOC_EvtID_T EvtIDsKeepAlive[] = {IOC_EVTID_TEST_KEEPALIVE};
 #define CbProcEvtA_F 0x01UL
 #define CbPrivA 0x02UL
   IOC_EvtSubArgs_T SuberArgA = {
       .CbProcEvt_F = (IOC_CbProcEvt_F)CbProcEvtA_F,
       .pCbPriv = (void*)CbPrivA,
       .EvtNum = 1,
-      .pEvtIDs = EvtIDsA,
+      .pEvtIDs = EvtIDsKeepAlive,
   };
 
   TOS_Result_T Result = __IOC_ConlesMode_subEVT(&SuberArgA);
@@ -184,13 +194,57 @@ TEST(EventConlesModeInternal, subEVT) {
   //===>TEARDOWN
   for (unsigned long Idx = 0; Idx < _mConlesEvtCtx.MaxSuberNum; Idx++) {
     IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[Idx];
-    if (pSavdSubArgs->pEvtIDs != NULL) {
+    if (pSavdSubArgs && pSavdSubArgs->pEvtIDs != NULL) {
       free(pSavdSubArgs->pEvtIDs);
+      pSavdSubArgs->pEvtIDs = NULL;
       pSavdSubArgs->CbProcEvt_F = NULL;
     }
   }
 
   free(_mConlesEvtCtx.pSuberArgs);
+  _mConlesEvtCtx = BackupCtx;
+}
+
+//--->CASE[02]: MaxSuberNum is 1, CurSuberNum is 0, Repeat Nx(ObjA as EvtSuber do [subEvt/unsubEvt]) will SUCCESS
+TEST(EventConlesModeInternal, Case02_subEVT) {
+  //===>SETUP
+  _IOC_ConslesEventContext_T BackupCtx = _mConlesEvtCtx;
+
+  //===>EXECUTE
+  IOC_EvtID_T EvtIDsKeepAlive[] = {IOC_EVTID_TEST_KEEPALIVE};
+
+  _mConlesEvtCtx.MaxSuberNum = 1;
+  _mConlesEvtCtx.CurSuberNum = 0;
+
+  unsigned long RptNumMax = 1024;
+
+  for (unsigned long RptNum = 0; RptNum < RptNumMax; RptNum++) {
+    IOC_EvtSubArgs_T SubArgsA = {
+        .CbProcEvt_F = (IOC_CbProcEvt_F)0x20240126,
+        .pCbPriv = (void*)0x20240127,
+        .EvtNum = 1,
+        .pEvtIDs = EvtIDsKeepAlive,
+    };
+    TOS_Result_T Result = __IOC_ConlesMode_subEVT(&SubArgsA);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS) << "RptNum: " << RptNum;  // CheckPoint
+
+    IOC_EvtUnsubArgs_T UnsubArgsA = {
+        .CbProcEvt_F = (IOC_CbProcEvt_F)0x20240126,
+        .pCbPriv = (void*)0x20240127,
+    };
+    Result = __IOC_ConlesMode_unsubEVT(&UnsubArgsA);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS) << "RptNum: " << RptNum;  // CheckPoint
+  }
+
+  //===>TEARDOWN
+  for (unsigned long Idx = 0; Idx < _mConlesEvtCtx.MaxSuberNum; Idx++) {
+    IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[Idx];
+    if (pSavdSubArgs && pSavdSubArgs->pEvtIDs != NULL) {
+      free(pSavdSubArgs->pEvtIDs);
+      pSavdSubArgs->pEvtIDs = NULL;
+      pSavdSubArgs->CbProcEvt_F = NULL;
+    }
+  }
   _mConlesEvtCtx = BackupCtx;
 }
 
