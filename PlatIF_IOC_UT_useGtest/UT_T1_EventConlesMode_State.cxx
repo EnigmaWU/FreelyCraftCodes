@@ -78,6 +78,7 @@ static TOS_Result_T _UT_Case02_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pC
   _UT_Case02_CbPrivObjA_pT pCbPrivObjA = (_UT_Case02_CbPrivObjA_pT)pCbPriv;
   pCbPrivObjA->MagicValue = _UT_Case02_MagicValue_Y;
   sleep(3);
+  pCbPrivObjA->MagicValue = _UT_Case02_MagicValue_Z;
   return TOS_RESULT_SUCCESS;
 }
 
@@ -121,7 +122,7 @@ TEST(ConlesModeState, Case02) {
   }
 
   // Step-4: ObjA unsubEvt(TEST_KEEPALIVE)
-  IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {.CbProcEvt_F = _UT_Case01_CbProcEvtObjA_F, .pCbPriv = &CbPrivObjA};
+  IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {.CbProcEvt_F = _UT_Case02_CbProcEvtObjA_F, .pCbPriv = &CbPrivObjA};
   Result = PLT_IOC_unsubEVT(LinkID, &EvtUnsubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
