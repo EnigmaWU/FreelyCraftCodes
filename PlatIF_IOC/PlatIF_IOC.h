@@ -160,7 +160,7 @@ typedef enum
 } IOC_LinkStateValue_T;
 
 enum IOC_PreDefinedConst {
-  IOC_CONLESMODE_AUTO_LINK_ID = 0x20231227UL,
+  IOC_CONLESMODE_AUTO_LINK_ID = 0x20231227UL,  // a.k.a $AutoLinkID
 };
 
 typedef struct 
@@ -306,6 +306,21 @@ TOS_Result_T PLT_IOC_listenEVT(
     /*ARG_IN_OPTIONAL*/IOC_Options_pT);
 
 //TOS_Result_T PLT_IOC_pubEVT(/*ARG_IN*/IOC_LinkID_T LinkID, /*ARG_IN*/const IOC_EvtPubArgs_pT pEvtPubArgs);
+
+/**
+ * @brief ObjX call PLT_IOC_subEvt to subscribe EVT, when post EVT to LinkID, ObjX's $CbProcEvt_F will be callbacked.
+ * @param LinkID: LinkID to subscribe EVT used by EvtSuber, and to post EVT used by EvtPuber.
+ *          In ConetMode, LinkID is returned by PLT_IOC_connectService or PLT_IOC_acceptService.
+ *          In ConlesMode, LinkID is pre-defined IOC_CONLESMODE_AUTO_LINK_ID.
+ * @param pEvtSubArgs: EvtSuber's $CbProcEvt_F and $pCbPriv, and EvtIDs to subscribe.
+ *
+ * @return TOS_RESULT_SUCCESS: subscribe EVT success.
+ *      TOS_RESULT_INVALID_LINKID/_ARGS: invalid LinkID or pEvtSubArgs.
+ *      TOS_RESULT_NOT_ENOUGH_RESOURCE: no enough resource to subscribe EVT, too many EvtSubers or EvtIDs.
+ *      TOS_RESULT_ALREADY_SUBSCRIBED: already subscribed EVT.
+ *
+ * @note n/a
+ */
 TOS_Result_T PLT_IOC_subEVT(
     /*ARG_IN*/IOC_LinkID_T LinkID, 
     /*ARG_IN*/const IOC_EvtSubArgs_pT pEvtSubArgs);
