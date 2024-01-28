@@ -133,3 +133,120 @@ TEST(ConlesModeState, Case02) {
   pthread_cancel(Thread_ObjB);
   pthread_join(Thread_ObjB, NULL);
 }
+
+//===> Case[03]: Same as Case[01/02], but ObjB/C/D/E postEvt in a thread,
+//      while ObjA CbProcEvt_F() one-by-one according to LinkStateBusy.
+//  Step-1: Same with Case[01]-Step-1
+//  Step-2: Start Thread_ObjB/C/D/E to postEvt(TEST_KEEPALIVE*$_UT_KEEPALIVE_EVT_CNT) every 1ms
+//  Stet-3: ObjA sync its CbProcEvt_F() one-by-one in main thread, and wait/usleep 2ms in CbProcEvt_F
+//  Step-4: ObjA unsubEvt(TEST_KEEPALIVE) when all CbProcEvt_F() is done
+//  Step-5: Check ObjA's private TotalEvtCnt is $_UT_KEEPALIVE_EVT_CNT*4, and TryLockFailCnt is 0
+
+typedef struct {
+  unsigned long TotalEvtCnt;
+  unsigned long TryLockFailCnt;
+
+  pthread_mutex_t Mutex;
+
+  sem_t* pSemCbProcEvtEnterSync;
+  sem_t* pSemCbProcEvtContinueSync;
+} _UT_Case03_CbPrivObjA_T, *_UT_Case03_CbPrivObjA_pT;
+
+static TOS_Result_T _UT_Case03_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pCbPriv) {
+  _UT_Case03_CbPrivObjA_pT pCbPrivObjA = (_UT_Case03_CbPrivObjA_pT)pCbPriv;
+
+  int PSXRet = pthread_mutex_trylock(&pCbPrivObjA->Mutex);
+  if (PSXRet != 0) {
+    pCbPrivObjA->TryLockFailCnt++;
+    return TOS_RESULT_BAD_STATE;
+  }
+
+  pCbPrivObjA->TotalEvtCnt++;
+  usleep(2);
+
+  sem_post(pCbPrivObjA->pSemCbProcEvtEnterSync);
+  sem_wait(pCbPrivObjA->pSemCbProcEvtContinueSync);
+
+  pthread_mutex_unlock(&pCbPrivObjA->Mutex);
+  return TOS_RESULT_SUCCESS;
+}
+
+#define _UT_KEEPALIVE_EVT_CNT 200000
+
+static void* _UT_Case03_ThreadObjX(void* pArg) {
+  IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
+  IOC_EvtDesc_T EvtDescObjX = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
+  unsigned long TotalEvtCnt = 0;
+
+  while (1) {
+    PLT_IOC_postEVT(LinkID, &EvtDescObjX, NULL);
+    // usleep(1);
+
+    TotalEvtCnt++;
+    if (TotalEvtCnt >= _UT_KEEPALIVE_EVT_CNT) {
+      break;
+    }
+  }
+
+  return NULL;
+}
+
+TEST(ConlesModeState, Case03) {
+  IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
+
+  // Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private magic value X
+  _UT_Case03_CbPrivObjA_T CbPrivObjA = {};
+  CbPrivObjA.TotalEvtCnt = 0;
+  CbPrivObjA.TryLockFailCnt = 0;
+  pthread_mutex_init(&CbPrivObjA.Mutex, NULL);
+  CbPrivObjA.pSemCbProcEvtContinueSync = sem_open("/UT_Case03_CbProcEvtContinueSync", O_CREAT, 0644, 0);
+  ASSERT_NE(nullptr, CbPrivObjA.pSemCbProcEvtContinueSync);
+  CbPrivObjA.pSemCbProcEvtEnterSync = sem_open("/UT_Case03_CbProcEvtEnterSync", O_CREAT, 0644, 0);
+  ASSERT_NE(nullptr, CbPrivObjA.pSemCbProcEvtEnterSync);
+
+  IOC_EvtID_T EvtIDsObjA[] = {IOC_EVTID_TEST_KEEPALIVE};
+  IOC_EvtSubArgs_T EvtSubArgsObjA = {
+      .CbProcEvt_F = _UT_Case03_CbProcEvtObjA_F,
+      .pCbPriv = &CbPrivObjA,
+      .EvtNum = TOS_calcArrayElmtCnt(EvtIDsObjA),
+      .pEvtIDs = EvtIDsObjA,
+  };
+  TOS_Result_T Result = PLT_IOC_subEVT(LinkID, &EvtSubArgsObjA);
+  ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
+
+  // Step-2: Start Thread_ObjB/C/D/E to postEvt(TEST_KEEPALIVE*$_UT_KEEPALIVE_EVT_CNT) every 1ms
+  pthread_t Thread_ObjB, Thread_ObjC, Thread_ObjD, Thread_ObjE;
+  int PSXRet = pthread_create(&Thread_ObjB, NULL, _UT_Case03_ThreadObjX, NULL);
+  ASSERT_EQ(PSXRet, 0);  // CheckPoint
+  PSXRet = pthread_create(&Thread_ObjC, NULL, _UT_Case03_ThreadObjX, NULL);
+  ASSERT_EQ(PSXRet, 0);  // CheckPoint
+  PSXRet = pthread_create(&Thread_ObjD, NULL, _UT_Case03_ThreadObjX, NULL);
+  ASSERT_EQ(PSXRet, 0);  // CheckPoint
+  PSXRet = pthread_create(&Thread_ObjE, NULL, _UT_Case03_ThreadObjX, NULL);
+  ASSERT_EQ(PSXRet, 0);  // CheckPoint
+
+  // Stet-3: ObjA sync its CbProcEvt_F() one-by-one in main thread, and wait/usleep 2ms in CbProcEvt_F
+  for (int i = 0; i < _UT_KEEPALIVE_EVT_CNT * 4; i++) {
+    sem_wait(CbPrivObjA.pSemCbProcEvtEnterSync);
+    sem_post(CbPrivObjA.pSemCbProcEvtContinueSync);
+  }
+
+  // Step-4: ObjA unsubEvt(TEST_KEEPALIVE) when all CbProcEvt_F() is done
+  IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {.CbProcEvt_F = _UT_Case03_CbProcEvtObjA_F, .pCbPriv = &CbPrivObjA};
+  Result = PLT_IOC_unsubEVT(LinkID, &EvtUnsubArgsObjA);
+  ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
+
+  // Step-5: Check ObjA's private TotalEvtCnt is $_UT_KEEPALIVE_EVT_CNT*4, and TryLockFailCnt is 0
+  ASSERT_EQ(CbPrivObjA.TotalEvtCnt, _UT_KEEPALIVE_EVT_CNT * 4);  // CheckPoint
+  ASSERT_EQ(CbPrivObjA.TryLockFailCnt, 0);                       // CheckPoint
+
+  // TEARDOWN: Wait Thread_ObjB/C/D/E exit
+  pthread_join(Thread_ObjB, NULL);
+  pthread_join(Thread_ObjC, NULL);
+  pthread_join(Thread_ObjD, NULL);
+  pthread_join(Thread_ObjE, NULL);
+
+  pthread_mutex_destroy(&CbPrivObjA.Mutex);
+  sem_close(CbPrivObjA.pSemCbProcEvtEnterSync);
+  sem_close(CbPrivObjA.pSemCbProcEvtContinueSync);
+}
