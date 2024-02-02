@@ -4,9 +4,11 @@
     #include <gtest/gtest.h>
 #endif//CONFIG_BUILD_WITH_UTFWK_GTEST
 
-#include <unistd.h>
-#include <stdint.h>
+#include <pthread.h>
 #include <semaphore.h>
+#include <stdint.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #include "../PlatIF_IOC/PlatIF_IOC.h"
 
