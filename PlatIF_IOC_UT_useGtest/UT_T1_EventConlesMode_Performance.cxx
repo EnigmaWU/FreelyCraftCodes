@@ -6,8 +6,12 @@
 //===>Case[01]: ObjA as EvtSuber, ObjB/C/D/E/F as EvtPuber, use TEST_KEEPALIVE to simulate multi functional
 //  objects here is ObjB/C/D/E, tell single watchdog timer object here is ObjA, that their are still alive.
 //  Here performance means how FAST ObjA can process all the TEST_KEEPALIVE from ObjB/C/D/E.
-//  And we define the FAST as <=100us, and define it as IOC_Event in ConlesMode's Specification in 5P->1S per 1ms.
-//  [Step-1]:
+//  And we define the FAST as <=100us, and define it as IOC_Event in ConlesMode's Specification in 5P->1S per 10us.
+//  [Step-1]: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private KeepAliveEvtCnt to 0
+//  [Step-2]: ObjB/C/D/E/F as EvtPuber postEvt(TEST_KEEPALIVE) in each's thread context
+//            |-> In each's thread context, postEvt(TEST_KEEPALIVE) and check the post cost time <=100us
+//  [Step-3]: Wait for all ObjB/C/D/E/F's thread to finish
+//  [Step-4]: Check ObjA's KeepAliveEvtCnt is total of ObjB/C/D/E/F's postEvt(TEST_KEEPALIVE)
 
 typedef struct {
   unsigned long KeepAliveEvtCnt;
@@ -44,7 +48,7 @@ static void* _UT_Case01_ThreadObjX(void* pArg) {
 TEST(UT_ConlesModeEventPerf, Case01) {
   IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
 
-  // Step-1:
+  // Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE)
   _UT_Case01_CbPrivObjA_T CbPrivObjA = {.KeepAliveEvtCnt = 0};
   IOC_EvtID_T EvtIDsObjA[] = {IOC_EVTID_TEST_KEEPALIVE};
   IOC_EvtSubArgs_T EvtSubArgsObjA = {
@@ -57,18 +61,18 @@ TEST(UT_ConlesModeEventPerf, Case01) {
   TOS_Result_T Result = PLT_IOC_subEVT(LinkID, &EvtSubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
-  // Step-2:
+  // Step-2: ObjB/C/D/E/F as EvtPuber postEvt(TEST_KEEPALIVE) in each's thread context
   pthread_t ThreadID[5];  // ObjB/C/D/E/F
   for (int i = 0; i < 5; i++) {
     pthread_create(&ThreadID[i], NULL, _UT_Case01_ThreadObjX, NULL);
   }
 
-  // Step-3:
+  // Step-3: Wait for all ObjB/C/D/E/F's thread to finish
   for (int i = 0; i < 5; i++) {
     pthread_join(ThreadID[i], NULL);
   }
 
-  // Step-4:
+  // Step-4: Check ObjA's KeepAliveEvtCnt is total of ObjB/C/D/E/F's postEvt(TEST_KEEPALIVE)
   ASSERT_EQ(CbPrivObjA.KeepAliveEvtCnt, _UT_Case01_KEEPALIVE_EVT_NUM * 5);  // CheckPoint
 }
 
