@@ -8,6 +8,7 @@
 //  Here performance means how FAST ObjA can process all the TEST_KEEPALIVE from ObjB/C/D/E.
 //  And we define the FAST as <=100us, and define it as IOC_Event in ConlesMode's Specification in 5P->1S per 10us.
 //  [Step-1]: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private KeepAliveEvtCnt to 0
+//            |-> In ObjA's CbProcEvt_F(), KeepAliveEvtCnt++
 //  [Step-2]: ObjB/C/D/E/F as EvtPuber postEvt(TEST_KEEPALIVE) in each's thread context
 //            |-> In each's thread context, postEvt(TEST_KEEPALIVE) and check the post cost time <=100us
 //  [Step-3]: Wait for all ObjB/C/D/E/F's thread to finish
