@@ -6,7 +6,7 @@
 //===>Case[01]: ObjA as EvtSuber, ObjB/C/D/E/F as EvtPuber, use TEST_KEEPALIVE to simulate multi functional
 //  objects here is ObjB/C/D/E, tell single watchdog timer object here is ObjA, that their are still alive.
 //  Here performance means how FAST ObjA can process all the TEST_KEEPALIVE from ObjB/C/D/E.
-//  And we define the FAST as <=1ms as IOC_Event in ConlesMode's Specification in 5P->1S.
+//  And we define the FAST as <=100us, and define it as IOC_Event in ConlesMode's Specification in 5P->1S per 1ms.
 //  [Step-1]:
 
 typedef struct {
@@ -19,7 +19,7 @@ static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pC
   return TOS_RESULT_SUCCESS;
 }
 
-#define _UT_Case01_KEEPALIVE_EVT_NUM 1000000
+#define _UT_Case01_KEEPALIVE_EVT_NUM 100000
 
 static void* _UT_Case01_ThreadObjX(void* pArg) {
   IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
@@ -32,9 +32,11 @@ static void* _UT_Case01_ThreadObjX(void* pArg) {
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
     gettimeofday(&AfterPostTime, NULL);
 
-    unsigned long PostTimeMS =
-        (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000 + (AfterPostTime.tv_usec - BeforePostTime.tv_usec) / 1000;
-    EXPECT_LE(PostTimeMS, 1);  // CheckPoint
+    unsigned long PostTimeUS =
+        (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + (AfterPostTime.tv_usec - BeforePostTime.tv_usec);
+    EXPECT_LE(PostTimeUS, 100);  // CheckPoint
+
+    usleep(10);
   }
   return NULL;
 }
@@ -69,3 +71,5 @@ TEST(UT_ConlesModeEventPerf, Case01) {
   // Step-4:
   ASSERT_EQ(CbPrivObjA.KeepAliveEvtCnt, _UT_Case01_KEEPALIVE_EVT_NUM * 5);  // CheckPoint
 }
+
+//===>Case[02]:
