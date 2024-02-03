@@ -27,6 +27,7 @@
  *:->MSG is a Command(a.k.a CMD) or Event(a.k.a EVT) or Data(a.k.a DAT).
  *      CMD is SYNC and DGRAM defined by IOC identified by CmdID;
  *      EVT is ASYNC and DGRAM defined by IOC identified by EvtID;
+ *        Its default property is MAYBLOCK+NODROP+NOTIMEOUT, and may be changed by setLinkParams or IOC_Options_T.
  *      DAT is ASNYC and STREAM defined by IOC knowns only by object pair;
  *
  *:->Link+MSG has Single or Hybrid Mode(a.k.a S-Mode vs H-Mode).
