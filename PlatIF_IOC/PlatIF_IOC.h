@@ -194,9 +194,14 @@ typedef struct
     const char *pSrvURL;
 } IOC_LinkArgs_T, *IOC_LinkArgs_pT;
 
+typedef enum {
+  IOC_MSGFLAG_MAYDROP = 1 << 0,  // set this flag to allow drop this message if no enough resource.
+} IOC_MsgFlags_T;
+
 typedef struct
 {
     unsigned long SeqID;
+    IOC_MsgFlags_T Flags;
 } IOC_MsgDesc_T, *IOC_MsgDesc_pT;
 typedef struct 
 {
