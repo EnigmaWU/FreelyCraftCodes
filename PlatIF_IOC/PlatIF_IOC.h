@@ -328,6 +328,7 @@ TOS_Result_T PLT_IOC_recvDAT(
  *      IF NULL, default options will be used, which means EVT's default properity, or effective properity set by setLinkParam.
  *      IF NOT NULL, NONBLOCK, MAYDROP, TIMEOUT, ... can be set to change EVT's properity by each postEVT.
  * @return TOS_RESULT_SUCCESS: post EVT success.
+ *         TOS_RESULT_TIMEOUT: post EVT timeout, only valid when pOptions->IDs has IOC_OPTID_TIMEOUT.
  */
 TOS_Result_T PLT_IOC_postEVT(
     /*ARG_IN*/IOC_LinkID_T LinkID, 
