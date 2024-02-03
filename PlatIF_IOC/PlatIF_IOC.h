@@ -1,4 +1,6 @@
 //THIS FILE IS PlatIF_IOC's PUBLIC HEADER FILE.
+#include <stdint.h>
+
 #include "../ThinkOS/TOS_Base4ALL.h"
 
 /**
@@ -241,10 +243,20 @@ typedef struct {
     void *pCbPriv;
 } IOC_EvtUnsubArgs_T, *IOC_EvtUnsubArgs_pT;
 
+typedef enum {
+  IOC_OPTID_TIMEOUT = 1 << 0,  // set this IDs and Payload.TimeoutUS>=0, to set timeout for execCMD,waitCMD,sendDAT,recvDAT,...
+  // TODO(@W): +More...
+} IOC_OptionsID_T;
+
 typedef struct 
 {
-    //OPT: Timeout,NonBlock,MayDrop, ...
-    long RZVD;
+    IOC_OptionsID_T IDs;
+
+    union {
+      uint64_t RZVD[8];  // reserve for MAX payload size.
+      uint32_t TimeoutUS;
+    } Payload;
+
 } IOC_Options_T, *IOC_Options_pT;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
