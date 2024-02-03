@@ -296,6 +296,21 @@ TOS_Result_T PLT_IOC_recvDAT(
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //===> APIs for both ConetMode and ConlesMode
+/**
+ * @brief ObjX call PLT_IOC_postEVT to post EVT to LinkID, the EVT is described by pEvtDesc.
+ *     Any ObjY who listenEVT this LinkID will get every EVT copy into its pEvtDesc and process the EVT in ObjY's own context,
+ *  OR Any ObjY who subEVT this LinkID, and matched $EvtIDs will be callbacked via $CbProcEvt_F with pEvtDesc argment.
+ *
+ * @param LinkID: LinkID to post EVT used by EvtPuber, and to subscribe EVT used by EvtSuber.
+ *          In ConetMode, LinkID is returned by PLT_IOC_connectService or PLT_IOC_acceptService.
+ *          In ConlesMode, LinkID is pre-defined IOC_CONLESMODE_AUTO_LINK_ID.
+ * @param pEvtDesc: EVT to post, RefMore: IOC_EvtDesc_T.
+ *      IF postEvt SUCCESS, pEvtDesc is copied away by IOC, and ObjX can reuse it.
+ * @param pOptions: Optional options, RefMore: IOC_Options_T.
+ *      IF NULL, default options will be used, which means EVT's default properity, or effective properity set by setLinkParam.
+ *      IF NOT NULL, NONBLOCK, MAYDROP, TIMEOUT, ... can be set to change EVT's properity by each postEVT.
+ * @return TOS_RESULT_SUCCESS: post EVT success.
+ */
 TOS_Result_T PLT_IOC_postEVT(
     /*ARG_IN*/IOC_LinkID_T LinkID, 
     /*ARG_IN*/const IOC_EvtDesc_pT pEvtDesc,
@@ -312,7 +327,7 @@ TOS_Result_T PLT_IOC_listenEVT(
  * @param LinkID: LinkID to subscribe EVT used by EvtSuber, and to post EVT used by EvtPuber.
  *          In ConetMode, LinkID is returned by PLT_IOC_connectService or PLT_IOC_acceptService.
  *          In ConlesMode, LinkID is pre-defined IOC_CONLESMODE_AUTO_LINK_ID.
- * @param pEvtSubArgs: EvtSuber's $CbProcEvt_F and $pCbPriv, and EvtIDs to subscribe.
+ * @param pEvtSubArgs: EvtSuber's $CbProcEvt_F and $pCbPriv, and $EvtIDs to subscribe.
  *
  * @return TOS_RESULT_SUCCESS: subscribe EVT success.
  *      TOS_RESULT_INVALID_LINKID/_ARGS: invalid LinkID or pEvtSubArgs.
