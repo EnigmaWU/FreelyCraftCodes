@@ -21,8 +21,8 @@ typedef struct {
 
 static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pCbPriv) {
   _UT_Case01_CbPrivObjA_pT pCbPrivObjA = (_UT_Case01_CbPrivObjA_pT)pCbPriv;
-  pCbPrivObjA->MagicValue = 0x87654321;
   sleep(3);
+  pCbPrivObjA->MagicValue = 0x87654321;
   return TOS_RESULT_SUCCESS;
 }
 
