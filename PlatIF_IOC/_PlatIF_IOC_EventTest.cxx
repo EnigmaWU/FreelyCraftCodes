@@ -116,13 +116,68 @@ static TOS_Result_T __IOC_ConlesMode_unsubEVT(const IOC_EvtUnsubArgs_pT pEvtUnsu
   return TOS_RESULT_SUCCESS;
 }
 
+#ifdef __APPLE__
+static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *abs_timeout) {
+  int result;
+  struct timespec ts;
+  struct timespec rem;
+
+  while ((result = pthread_mutex_trylock(mutex)) == EBUSY) {
+    clock_gettime(CLOCK_REALTIME, &ts);
+    if (ts.tv_sec > abs_timeout->tv_sec || (ts.tv_sec == abs_timeout->tv_sec && ts.tv_nsec >= abs_timeout->tv_nsec)) {
+      return ETIMEDOUT;
+    }
+
+    ts.tv_sec = 0;
+    ts.tv_nsec = 1000;  // 1 us
+    nanosleep(&ts, &rem);
+  }
+
+  return result;
+}
+#endif
+
 static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, const IOC_Options_pT pOptions) {
   bool IsCbProcEvt_Found = false;
+  bool IsNonBlock = false;
+  bool IsTimeout = false;
+  int RetPSX = -1;
+  uint32_t TimeoutUS = 0;
 
-  int RetPSX = pthread_mutex_lock(&_mConlesEvtCtx.Mutex);
+  if (pOptions != NULL && (pOptions->IDs & IOC_OPTID_TIMEOUT)) {
+        TimeoutUS = pOptions->Payload.TimeoutUS;
+        if (TimeoutUS == 0) {
+            IsNonBlock = true;
+        } else {
+            IsTimeout = true;
+        }
+  }
+
+  if (IsNonBlock) {
+    RetPSX = pthread_mutex_trylock(&_mConlesEvtCtx.Mutex);
+    if (RetPSX == EBUSY) {
+      return TOS_RESULT_TIMEOUT;
+    }
+  } else if (IsTimeout) {
+    struct timespec AbsTime;
+    clock_gettime(CLOCK_REALTIME, &AbsTime);
+    AbsTime.tv_nsec += TimeoutUS * 1000;
+    AbsTime.tv_sec += AbsTime.tv_nsec / 1000000000;
+    AbsTime.tv_nsec %= 1000000000;
+
+    RetPSX = pthread_mutex_timedlock(&_mConlesEvtCtx.Mutex, &AbsTime);
+    if (RetPSX == ETIMEDOUT) {
+      return TOS_RESULT_TIMEOUT;
+    }
+  } else {
+    RetPSX = pthread_mutex_lock(&_mConlesEvtCtx.Mutex);
+  }
+
   if (RetPSX != 0) {
     return TOS_RESULT_BUG;
   }
+
+  //-------------------------------------------------------------------------------------------------------------------
   if (_mConlesEvtCtx.pSuberArgs == NULL) {
     pthread_mutex_unlock(&_mConlesEvtCtx.Mutex);
     return TOS_RESULT_NOT_FOUND;
