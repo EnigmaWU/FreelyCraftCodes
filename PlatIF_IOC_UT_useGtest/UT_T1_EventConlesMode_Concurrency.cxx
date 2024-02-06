@@ -13,6 +13,7 @@
 //      ObjA's EvtCntBlockSleep1MS is $_UT_EVT_CNT_BLOCK
 //      ObjA's EvtCntNonBlockSleep5MS>0 && EvtCntPostRstTimeout>0
 //          && (EvtCntNonBlockSleep5MS + ObjC's EvtCntPostRstTimeout) == $_UT_EVT_CNT_NONBLOCK
+//      AND ObjB/C's postEvt() performance is still FAST(<=100us)
 //
 //  Step-1:
 
@@ -45,8 +46,17 @@ static void* _UT_Case01_ThreadObjB(void* pArg) {
   IOC_EvtDesc_T EvtDescObjB = {.EvtID = IOC_EVTID_TEST_BLOCK_SLEEP_1MS};
 
   for (int i = 0; i < _UT_EVT_CNT_BLOCK; i++) {
+    struct timeval BeforePostTime, AfterPostTime;
+
+    gettimeofday(&BeforePostTime, NULL);
     TOS_Result_T Result = PLT_IOC_postEVT(LinkID, &EvtDescObjB, NULL);
+    gettimeofday(&AfterPostTime, NULL);
+
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
+
+    unsigned long PostTimeUS =
+        (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + (AfterPostTime.tv_usec - BeforePostTime.tv_usec);
+    EXPECT_LE(PostTimeUS, 100);  // CheckPoint@Performance_FAST(<=100us)
 
     usleep(30);
   }
@@ -64,13 +74,21 @@ static void* _UT_Case01_ThreadObjC(void* pArg) {
 
   for (int i = 0; i < _UT_EVT_CNT_NONBLOCK; i++) {
     IOC_Options_T OptTimeout = {.IDs = IOC_OPTID_TIMEOUT, .Payload{.TimeoutUS = 0 /*nonblock*/}};
+    struct timeval BeforePostTime, AfterPostTime;
+
+    gettimeofday(&BeforePostTime, NULL);
     TOS_Result_T Result = PLT_IOC_postEVT(LinkID, &EvtDescObjC, &OptTimeout);
+    gettimeofday(&AfterPostTime, NULL);
 
     if (Result == TOS_RESULT_TIMEOUT) {
       pCbPrivObjC->EvtCntPostRstTimeout++;
     } else {
       EXPECT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
     }
+
+    unsigned long PostTimeUS =
+        (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + (AfterPostTime.tv_usec - BeforePostTime.tv_usec);
+    EXPECT_LE(PostTimeUS, 100);  // CheckPoint@Performance_FAST(<=100us)
 
     usleep(1);
   }
