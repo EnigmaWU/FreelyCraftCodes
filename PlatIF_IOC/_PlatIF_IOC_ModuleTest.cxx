@@ -9,6 +9,10 @@ extern "C" {
 
 TOS_Result_T PLT_IOC_initModule(TOS_ModuleObjectID_T *pModObjID, const IOC_ModuleArgs_pT pModArgs)
 {
+  if (pModObjID == NULL || pModArgs == NULL) {
+    return TOS_RESULT_INVALID;
+  }
+
     return TOS_RESULT_NOT_IMPLEMENTED;
 }
 
