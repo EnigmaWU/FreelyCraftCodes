@@ -63,13 +63,13 @@ TEST(UT_ConlesModeEventPerf, Case01) {
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
   // Step-2: ObjB/C/D/E/F as EvtPuber postEvt(TEST_KEEPALIVE) in each's thread context
-  pthread_t ThreadID[5];  // ObjB/C/D/E/F
-  for (int i = 0; i < 5; i++) {
+  pthread_t ThreadID[5];  // ObjX=ObjB/C/D/E/F
+  for (int i = 0; i < TOS_calcArrayElmtCnt(ThreadID); i++) {
     pthread_create(&ThreadID[i], NULL, _UT_Case01_ThreadObjX, NULL);
   }
 
   // Step-3: Wait for all ObjB/C/D/E/F's thread to finish
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < TOS_calcArrayElmtCnt(ThreadID); i++) {
     pthread_join(ThreadID[i], NULL);
   }
 
