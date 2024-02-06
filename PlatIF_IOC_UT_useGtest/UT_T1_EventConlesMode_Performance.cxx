@@ -39,7 +39,7 @@ static void* _UT_Case01_ThreadObjX(void* pArg) {
 
     unsigned long PostTimeUS =
         (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + (AfterPostTime.tv_usec - BeforePostTime.tv_usec);
-    EXPECT_LE(PostTimeUS, 100);  // CheckPoint
+    EXPECT_LE(PostTimeUS, 100);  // CheckPoint@Performance_FAST(<=100us)
 
     usleep(10);
   }
