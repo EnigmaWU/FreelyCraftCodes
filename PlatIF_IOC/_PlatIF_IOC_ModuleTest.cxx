@@ -18,6 +18,10 @@ TOS_Result_T PLT_IOC_initModule(TOS_ModuleObjectID_T *pModObjID, const IOC_Modul
 
 TOS_Result_T PLT_IOC_deinitModule(TOS_ModuleObjectID_T ModObjID)
 {
+    if (!ModObjID) {
+    return TOS_RESULT_INVALID;
+    }
+
     return TOS_RESULT_NOT_IMPLEMENTED;
 }
 #ifdef __cplusplus
