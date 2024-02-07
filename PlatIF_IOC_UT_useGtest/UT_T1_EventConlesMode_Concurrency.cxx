@@ -55,7 +55,7 @@ static void* _UT_Case01_ThreadObjB(void* pArg) {
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
     unsigned long PostTimeUS =
-        (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + (AfterPostTime.tv_usec - BeforePostTime.tv_usec);
+        (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + AfterPostTime.tv_usec - BeforePostTime.tv_usec;
     EXPECT_LE(PostTimeUS, 100);  // CheckPoint@Performance_FAST(<=100us)
 
     usleep(30);
@@ -87,7 +87,7 @@ static void* _UT_Case01_ThreadObjC(void* pArg) {
     }
 
     unsigned long PostTimeUS =
-        (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + (AfterPostTime.tv_usec - BeforePostTime.tv_usec);
+        (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + AfterPostTime.tv_usec - BeforePostTime.tv_usec;
     EXPECT_LE(PostTimeUS, 100);  // CheckPoint@Performance_FAST(<=100us)
 
     usleep(1);
