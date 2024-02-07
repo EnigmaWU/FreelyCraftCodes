@@ -42,6 +42,12 @@
  *          USE IOC_Options_T to change Link's current postEvt to NONBLOCK,
  *              by set enable timeout checking and with timeout value '0',
  *              which means ObjX's postEVT will return TOS_RESULT_TIMEOUT if not enough resource to postEVT.
+ *    [NODROP]: means after ObjX's postEVT success, if IOC's internal MAY drop this EVT,
+ *      such as IOC's internal subsystem or submodule is busy or not enough resource to process this EVT.
+ *      Here assume IOC is a complex system, such as ObjX vs ObjY is inter-process or inter-machine communication.
+ *      USE setLinkParams to change Link's each postEvt to MAYDROP,
+ *      USE IOC_Options_T to change Link's current postEvt to MAYDROP,
+ *          which means ObjX's postEVT success, but sometimes ObjY never get this EVT.
  *  DAT is ASNYC and STREAM defined by IOC knowns only by object pair;
  *
  *:->Link+MSG has Single or Hybrid Mode(a.k.a S-Mode vs H-Mode).
