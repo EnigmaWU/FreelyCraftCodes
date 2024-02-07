@@ -183,10 +183,10 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
     return TOS_RESULT_NOT_FOUND;
   }
 
-  for (unsigned long SuberIdx = 0; SuberIdx < _mConlesEvtCtx.CurSuberNum; SuberIdx++) {
+  for (ULONG_T SuberIdx = 0; SuberIdx < _mConlesEvtCtx.CurSuberNum; SuberIdx++) {
     IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[SuberIdx];
     if (pSavdSubArgs->CbProcEvt_F != NULL && pSavdSubArgs->pEvtIDs != NULL) {
-      for (unsigned long EvtIdx = 0; EvtIdx < pSavdSubArgs->EvtNum; EvtIdx++) {
+      for (ULONG_T EvtIdx = 0; EvtIdx < pSavdSubArgs->EvtNum; EvtIdx++) {
         if (pSavdSubArgs->pEvtIDs[EvtIdx] == pEvtDesc->EvtID) {
           pSavdSubArgs->CbProcEvt_F(pEvtDesc, pSavdSubArgs->pCbPriv);
           IsCbProcEvt_Found = true;
