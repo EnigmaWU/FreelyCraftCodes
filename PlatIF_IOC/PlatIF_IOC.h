@@ -360,6 +360,9 @@ TOS_Result_T PLT_IOC_postEVT(
     /*ARG_IN*/IOC_LinkID_T LinkID, 
     /*ARG_IN*/const IOC_EvtDesc_pT pEvtDesc,
     /*ARG_IN_OPTIONAL*/IOC_Options_pT);
+
+#define PLT_IOC_postEVT_inConlesMode(pEvtDesc, pOption) PLT_IOC_postEVT(IOC_CONLESMODE_AUTO_LINK_ID, pEvtDesc, pOption)
+
 TOS_Result_T PLT_IOC_listenEVT(
     /*ARG_IN*/IOC_LinkID_T LinkID, 
     /*ARG_OUT*/IOC_EvtDesc_pT pEvtDesc,
@@ -384,9 +387,14 @@ TOS_Result_T PLT_IOC_listenEVT(
 TOS_Result_T PLT_IOC_subEVT(
     /*ARG_IN*/IOC_LinkID_T LinkID, 
     /*ARG_IN*/const IOC_EvtSubArgs_pT pEvtSubArgs);
+
+#define PLT_IOC_subEVT_inConlesMode(pEvtSubArgs) PLT_IOC_subEVT(IOC_CONLESMODE_AUTO_LINK_ID, pEvtSubArgs)
+
 TOS_Result_T PLT_IOC_unsubEVT(
     /*ARG_IN*/ IOC_LinkID_T LinkID,
     /*ARG_IN_OPTIONAL*/ const IOC_EvtUnsubArgs_pT pEvtUnsubArgs);
+
+#define PLT_IOC_unsubEVT_inConlesMode(pEvtUnsubArgs) PLT_IOC_unsubEVT(IOC_CONLESMODE_AUTO_LINK_ID, pEvtUnsubArgs)
 
 #ifdef __cplusplus
 }
