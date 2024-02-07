@@ -10,6 +10,7 @@
  *  Object will be instanced as ObjX/ObjY/ObjZ, who will call IOC's API to communicate with other in Message(a.k.a MSG),
  *      such as ObjX send a MSG to ObjY, who processed MSG and acked to ObjX, then send a new MSG to ObjZ.
  *
+ *  ===================================================================================================================
  *:->Communicate has Connect or Connectless Mode(a.k.a ConetMode ConlesMode).
  *     @ConetMode@:
  *       [1] ObjX MUST call PLT_IOC_onlineService to online a service with $SrvArgs and identfied as $SrvID.
@@ -26,30 +27,34 @@
  *          [D] Dynamic: ObjX call PLT_IOC_onlineService in its context to online a service and identfied as $SrvID,
  *          [S] Static: ObjX use PLT_IOC_defineService in its source to define and identfied by $SrvArgs::SrvURL.
  *
+ *  ===================================================================================================================
  *:->MSG is a Command(a.k.a CMD) or an Event(a.k.a EVT) or a piece of Data(a.k.a DAT).
- *  CMD is SYNC and DGRAM defined by IOC identified by CmdID;
- *  EVT is ASYNC and DGRAM defined by IOC identified by EvtID;
- *    Its default property is ASYNC+MAYBLOCK+NODROP+NOTIMEOUT, and may be changed by setLinkParams or IOC_Options_T.
- *      ASYNC：means ObjX in its current context postEVT to LinkID,
- *          then ObjY's CbProcEvt_F will be callbacked in IOC's context, not in ObjX's context.
- *          Here IOC's context is designed&implemented by IOC, may be a standalone thread or a thread pool.
- *          USE setLinkParams to change Link's each postEvt to SYNC,
- *          USE IOC_Options_T to change Link's current postEvt to SYNC,
- *              which means ObjY's CbProcEvt_F callbacked in ObjX's context.
- *      [MAYBLOCK]: means ObjX's postEVT may be blocked if not enough resource to postEVT,
- *          such as no free space to pending buffer the pEvtDesc.
- *          USE setLinkParams to change Link's each postEvt to NONBLOCK,
- *          USE IOC_Options_T to change Link's current postEvt to NONBLOCK,
- *              by set enable timeout checking and with timeout value '0',
- *              which means ObjX's postEVT will return TOS_RESULT_TIMEOUT if not enough resource to postEVT.
+ *  [CMD] is SYNC and DGRAM defined by IOC identified by CmdID;
+ *  -------------------------------------------------------------------------------------------------------------------
+ *  [EVT] is ASYNC and DGRAM defined by IOC identified by EvtID;
+ *    Its default property is ASYNC+MAYBLOCK+NODROP, and may be changed by setLinkParams or IOC_Options_T.
+ *    [ASYNC]：means ObjX in its current context postEVT to LinkID,
+ *      then ObjY's CbProcEvt_F will be callbacked in IOC's context, not in ObjX's context.
+ *      Here IOC's context is designed&implemented by IOC, may be a standalone thread or a thread pool.
+ *      USE setLinkParams to change Link's each postEvt to SYNC,
+ *      USE IOC_Options_T to change Link's current postEvt to SYNC,
+ *          which means ObjY's CbProcEvt_F callbacked in ObjX's context.
+ *    [MAYBLOCK]: means ObjX's postEVT may be blocked if not enough resource to postEVT,
+ *      such as no free space to pending buffer the pEvtDesc.
+ *      USE setLinkParams to change Link's each postEvt to NONBLOCK,
+ *      USE IOC_Options_T to change Link's current postEvt to NONBLOCK,
+ *          by set enable timeout checking and with timeout value '0',
+ *          which means ObjX's postEVT will return TOS_RESULT_TIMEOUT if not enough resource to postEVT.
  *    [NODROP]: means after ObjX's postEVT success, if IOC's internal MAY drop this EVT,
  *      such as IOC's internal subsystem or submodule is busy or not enough resource to process this EVT.
  *      Here assume IOC is a complex system, such as ObjX vs ObjY is inter-process or inter-machine communication.
  *      USE setLinkParams to change Link's each postEvt to MAYDROP,
  *      USE IOC_Options_T to change Link's current postEvt to MAYDROP,
  *          which means ObjX's postEVT success, but sometimes ObjY never get this EVT.
- *  DAT is ASNYC and STREAM defined by IOC knowns only by object pair;
+ *  -------------------------------------------------------------------------------------------------------------------
+ *  [DAT] is ASNYC and STREAM defined by IOC knowns only by object pair;
  *
+ *  ===================================================================================================================
  *:->Link+MSG has Single or Hybrid Mode(a.k.a S-Mode vs H-Mode).
  *      S-Mode: means a $LinkID ONLY used by ONE of execCMD or postEVT or sendDAT.
  *          This S-Mode is enabled by default, equals to CONFIG_BUILD_ENABLE_IOC_LINK_SINGLE_MODE.
@@ -59,6 +64,7 @@
  *:->Notes:
  *      ...
  *
+ *  ===================================================================================================================
  *:->Call flow typical examples of ConetMode:
  *  [1]: ObjX as service, accept connection from ObjY, and ObjX ask ObjY to execute commands.
  *      ObjX: PLT_IOC_onlineService($SrvArgs::SrvURL) -> $SrvID_atObjX
@@ -74,6 +80,7 @@
  *  [3]: TODO(@W)
  *      ...
  *
+ *  ===================================================================================================================
  *:->Call flow typical examples of ConlesMode:
  *  [1]: ObjX as EvtSuber subscribe EVT, ObjY as EvtPuber post EVT, ObjX process EVT posted by ObjY.
  *      ObjX: PLT_IOC_subEVT($AutoLinkID, $EvtDesc::[EvtID, $CbProcEvt_F])
