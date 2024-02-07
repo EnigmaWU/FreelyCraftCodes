@@ -274,7 +274,8 @@ typedef struct {
 } IOC_EvtUnsubArgs_T, *IOC_EvtUnsubArgs_pT;
 
 typedef enum {
-  IOC_OPTID_TIMEOUT = 1 << 0,  // set this IDs and Payload.TimeoutUS>=0, to set timeout for execCMD,waitCMD,sendDAT,recvDAT,...
+  IOC_OPTID_TIMEOUT = 1 << 0,    // set this IDs and Payload.TimeoutUS>=0, to set timeout for execCMD,waitCMD,sendDAT,recvDAT,...
+  IOC_OPTID_SYNC_MODE = 1 << 1,  // set this IDs and Payload.RZVD=0, to set SYNC mode for postEVT.
   // TODO(@W): +More...
 } IOC_OptionsID_T;
 

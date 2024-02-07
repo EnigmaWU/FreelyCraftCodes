@@ -39,7 +39,7 @@ static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pC
 }
 
 #define _UT_EVT_CNT_BLOCK 1000
-#define _UT_EVT_CNT_NONBLOCK 100000
+#define _UT_EVT_CNT_NONBLOCK 1000000
 
 static void* _UT_Case01_ThreadObjB(void* pArg) {
   IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;

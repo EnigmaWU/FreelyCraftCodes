@@ -4,6 +4,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "PlatIF_IOC.h"
 

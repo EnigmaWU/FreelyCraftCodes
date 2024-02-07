@@ -1,3 +1,6 @@
+#include <pthread.h>
+#include <sys/_pthread/_pthread_mutex_t.h>
+
 #include "_PlatIF_IOC.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14,6 +17,11 @@ typedef struct {
 
   IOC_EvtSubArgs_pT pSuberArgs;
   pthread_mutex_t Mutex;
+
+  bool IsSyncMode;
+
+  pthread_t ASyncThreadID;
+  pthread_mutex_t ASyncThreadIDMutex;
 } _IOC_ConslesEventContext_T, *_IOC_ConslesEventContext_pT;
 
 static _IOC_ConslesEventContext_T _mConlesEvtCtx = {
@@ -21,6 +29,9 @@ static _IOC_ConslesEventContext_T _mConlesEvtCtx = {
     .CurSuberNum = 0,
     .pSuberArgs = NULL,
     .Mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER,
+    .IsSyncMode = false,
+    .ASyncThreadID = 0,
+    .ASyncThreadIDMutex = PTHREAD_MUTEX_INITIALIZER,
 };
 
 static TOS_Result_T __IOC_ConlesMode_subEVT(const IOC_EvtSubArgs_pT pEvtSubArgs) {
@@ -138,22 +149,51 @@ static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec
 }
 #endif
 
+typedef struct {
+  _IOC_ConslesEventContext_pT pConlesEvtCtx;
+
+  IOC_EvtDesc_T EvtDesc;
+  IOC_CbProcEvt_F CbProcEvt_F;
+  void *pCbPriv;
+} _IOC_ConlesMode_ASyncEventThreadContext_T, *_IOC_ConlesMode_ASyncEventThreadContext_pT;
+
+static void *__IOC_ConlesMode_ASyncEventThread(void *pArg) {
+  _IOC_ConlesMode_ASyncEventThreadContext_pT pEvtASyncThreadCtx = (_IOC_ConlesMode_ASyncEventThreadContext_pT)pArg;
+
+  pEvtASyncThreadCtx->CbProcEvt_F(&pEvtASyncThreadCtx->EvtDesc, pEvtASyncThreadCtx->pCbPriv);
+
+  pthread_mutex_lock(&pEvtASyncThreadCtx->pConlesEvtCtx->ASyncThreadIDMutex);
+  pEvtASyncThreadCtx->pConlesEvtCtx->ASyncThreadID = 0;
+  pthread_mutex_unlock(&pEvtASyncThreadCtx->pConlesEvtCtx->ASyncThreadIDMutex);
+
+  free(pEvtASyncThreadCtx);
+  return NULL;
+}
+
 static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, const IOC_Options_pT pOptions) {
   bool IsCbProcEvt_Found = false;
   bool IsNonBlock = false;
   bool IsTimeout = false;
+  bool IsSyncMode = false;
   int RetPSX = -1;
   uint32_t TimeoutUS = 0;
 
-  if (pOptions != NULL && (pOptions->IDs & IOC_OPTID_TIMEOUT)) {
-        TimeoutUS = pOptions->Payload.TimeoutUS;
-        if (TimeoutUS == 0) {
-            IsNonBlock = true;
-        } else {
-            IsTimeout = true;
-        }
+  //-------------------------------------------------------------------------------------------------------------------
+  if (pOptions && (pOptions->IDs & IOC_OPTID_SYNC_MODE)) {
+    TOS_abortNotTested();
+    IsSyncMode = true;
   }
 
+  if (pOptions && (pOptions->IDs & IOC_OPTID_TIMEOUT)) {
+    TimeoutUS = pOptions->Payload.TimeoutUS;
+    if (TimeoutUS == 0) {
+      IsNonBlock = true;
+    } else {
+      IsTimeout = true;
+    }
+  }
+
+  //-------------------------------------------------------------------------------------------------------------------
   if (IsNonBlock) {
     RetPSX = pthread_mutex_trylock(&_mConlesEvtCtx.Mutex);
     if (RetPSX == EBUSY) {
@@ -178,22 +218,77 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
     return TOS_RESULT_BUG;
   }
 
-  //-------------------------------------------------------------------------------------------------------------------
   if (_mConlesEvtCtx.pSuberArgs == NULL) {
     pthread_mutex_unlock(&_mConlesEvtCtx.Mutex);
     return TOS_RESULT_NOT_FOUND;
   }
 
+  //-------------------------------------------------------------------------------------------------------------------
+  TOS_Result_T Result = TOS_RESULT_BUG;
+
   for (ULONG_T SuberIdx = 0; SuberIdx < _mConlesEvtCtx.CurSuberNum; SuberIdx++) {
     IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[SuberIdx];
-    if (pSavdSubArgs->CbProcEvt_F != NULL && pSavdSubArgs->pEvtIDs != NULL) {
-      for (ULONG_T EvtIdx = 0; EvtIdx < pSavdSubArgs->EvtNum; EvtIdx++) {
-        if (pSavdSubArgs->pEvtIDs[EvtIdx] == pEvtDesc->EvtID) {
-          pSavdSubArgs->CbProcEvt_F(pEvtDesc, pSavdSubArgs->pCbPriv);
-          IsCbProcEvt_Found = true;
-          break;
+    if (pSavdSubArgs->CbProcEvt_F == NULL || pSavdSubArgs->pEvtIDs == NULL) {
+      continue;
+    }
+
+    for (ULONG_T EvtIdx = 0; EvtIdx < pSavdSubArgs->EvtNum; EvtIdx++) {
+      if (pSavdSubArgs->pEvtIDs[EvtIdx] != pEvtDesc->EvtID) {
+        continue;
+      }
+
+      //-------------------------------------------------------------------------------------------------------------------
+      if (IsSyncMode || _mConlesEvtCtx.IsSyncMode) {
+        pSavdSubArgs->CbProcEvt_F(pEvtDesc, pSavdSubArgs->pCbPriv);
+      } else /*ASyncMode*/ {
+        pthread_mutex_lock(&_mConlesEvtCtx.ASyncThreadIDMutex);
+        if (_mConlesEvtCtx.ASyncThreadID && IsNonBlock) {
+          Result = TOS_RESULT_TIMEOUT;
+          pthread_mutex_unlock(&_mConlesEvtCtx.ASyncThreadIDMutex);
+        } else if (_mConlesEvtCtx.ASyncThreadID && IsTimeout) {
+          // TODO(@W): IMPLE ASyncMode with Timeout
+          TOS_abortNotTested();
+          Result = TOS_RESULT_NOT_IMPLEMENTED;
+          pthread_mutex_unlock(&_mConlesEvtCtx.ASyncThreadIDMutex);
+        } else /*MayBlock*/ {
+          _IOC_ConlesMode_ASyncEventThreadContext_pT pASyncThreadCtx =
+              (_IOC_ConlesMode_ASyncEventThreadContext_pT)calloc(1, sizeof(_IOC_ConlesMode_ASyncEventThreadContext_T));
+          if (pASyncThreadCtx) {
+            pASyncThreadCtx->pConlesEvtCtx = &_mConlesEvtCtx;
+            pASyncThreadCtx->EvtDesc = *pEvtDesc;
+            pASyncThreadCtx->CbProcEvt_F = pSavdSubArgs->CbProcEvt_F;
+            pASyncThreadCtx->pCbPriv = pSavdSubArgs->pCbPriv;
+
+            do {
+              if (!_mConlesEvtCtx.ASyncThreadID) {
+                break;
+              } else {
+                pthread_mutex_unlock(&_mConlesEvtCtx.ASyncThreadIDMutex);
+                usleep(100);
+                pthread_mutex_lock(&_mConlesEvtCtx.ASyncThreadIDMutex);
+              }
+            } while (0x20240207);
+
+            int PSXRet = pthread_create(&_mConlesEvtCtx.ASyncThreadID, NULL, __IOC_ConlesMode_ASyncEventThread, pASyncThreadCtx);
+            if (PSXRet == 0) {
+              pthread_detach(_mConlesEvtCtx.ASyncThreadID);
+              Result = TOS_RESULT_SUCCESS;
+            } else {
+              free(pASyncThreadCtx);
+              TOS_abortNotTested();
+              Result = TOS_RESULT_NOT_ENOUGH_RESOURCE;
+            }
+          } else {
+            TOS_abortNotTested();
+            Result = TOS_RESULT_NOT_ENOUGH_RESOURCE;
+          }
+
+          pthread_mutex_unlock(&_mConlesEvtCtx.ASyncThreadIDMutex);
         }
       }
+
+      IsCbProcEvt_Found = true;
+      break;
     }
   }
   pthread_mutex_unlock(&_mConlesEvtCtx.Mutex);
@@ -201,7 +296,7 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
   if (!IsCbProcEvt_Found) {
     return TOS_RESULT_NO_EVT_SUBER;
   } else {
-    return TOS_RESULT_SUCCESS;
+    return Result;
   }
 }
 #ifdef __cplusplus
