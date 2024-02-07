@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #ifndef __TOS_BASE_HELPERS_H__
 #define __TOS_BASE_HELPERS_H__
 
@@ -8,10 +10,10 @@
  *
  * RefRst: TOS_RESULT_NOT_TESTED_BUG
  */
-#define TOS_abortNotTested()                                     \
-  do {                                                           \
-    printf("Not tested %s@%s:%d\n"__func__, __FILE__, __LINE__); \
-    abort();                                                     \
+#define TOS_abortNotTested()                                                           \
+  do {                                                                                 \
+    printf("$^NOT-TESTED-CODE^$ FUNCNAME=%s @ %s:%d\n", __func__, __FILE__, __LINE__); \
+    abort();                                                                           \
   } while (0)
 
 #endif//__TOS_BASE_HELPERS_H__

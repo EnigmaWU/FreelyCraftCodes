@@ -31,6 +31,7 @@ static TOS_Result_T __IOC_ConlesMode_subEVT(const IOC_EvtSubArgs_pT pEvtSubArgs)
 
   if (_mConlesEvtCtx.CurSuberNum >= _mConlesEvtCtx.MaxSuberNum) {
     pthread_mutex_unlock(&_mConlesEvtCtx.Mutex);
+    // TOS_abortNotTested(); -> @TEST(UT_ConlesModeEventINFILE, Case01_subEVT)
     return TOS_RESULT_NOT_ENOUGH_RESOURCE;
   }
 
@@ -212,7 +213,7 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
 #ifdef CONFIG_BUILD_INFILE_UNIT_TESTING_USE_UTFWK_GTEST
 #include <gtest/gtest.h>
 //--->CASE[01]: MaxSuberNum is 1, CurSuberNum is 0, SuberArgA will SUCCESS, SuberArgB will NOT_ENOUGH_RESOURCE
-TEST(EventConlesModeInternal, Case01_subEVT) {
+TEST(UT_ConlesModeEventINFILE, Case01_subEVT) {
   //===>SETUP
   _IOC_ConslesEventContext_T BackupCtx = _mConlesEvtCtx;
 
@@ -261,7 +262,7 @@ TEST(EventConlesModeInternal, Case01_subEVT) {
 }
 
 //--->CASE[02]: MaxSuberNum is 1, CurSuberNum is 0, Repeat Nx(ObjA as EvtSuber do [subEvt/unsubEvt]) will SUCCESS
-TEST(EventConlesModeInternal, Case02_subEVT) {
+TEST(UT_ConlesModeEventINFILE, Case02_subEVT) {
   //===>SETUP
   _IOC_ConslesEventContext_T BackupCtx = _mConlesEvtCtx;
 
@@ -303,8 +304,8 @@ TEST(EventConlesModeInternal, Case02_subEVT) {
   _mConlesEvtCtx = BackupCtx;
 }
 
-// TEST(EventConlesModeInternal, unsubEVT) {}
-// TEST(EventConlesModeInternal, postEVT) {}
+// TEST(UT_ConlesModeEventINFILE, unsubEVT) {}
+// TEST(UT_ConlesModeEventINFILE, postEVT) {}
 #endif /* CONFIG_BUILD_INFILE_UNIT_TESTING_USE_UTFWK_GTEST */
 //===> END of internal UT for ConlesMod of Event in CXX
 

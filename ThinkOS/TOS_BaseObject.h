@@ -1,9 +1,10 @@
 #include <stdint.h>
 
+#include "TOS_BaseObjectTypes.h"
 
 typedef struct 
 {
-
+  long RZVD;
 }TOS_BaseObjectConfig_T, *TOS_BaseObjectConfig_pT;
 
 typedef struct 
