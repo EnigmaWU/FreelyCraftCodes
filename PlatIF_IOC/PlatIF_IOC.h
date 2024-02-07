@@ -36,6 +36,12 @@
  *          USE setLinkParams to change Link's each postEvt to SYNC,
  *          USE IOC_Options_T to change Link's current postEvt to SYNC,
  *              which means ObjY's CbProcEvt_F callbacked in ObjX's context.
+ *      [MAYBLOCK]: means ObjX's postEVT may be blocked if not enough resource to postEVT,
+ *          such as no free space to pending buffer the pEvtDesc.
+ *          USE setLinkParams to change Link's each postEvt to NONBLOCK,
+ *          USE IOC_Options_T to change Link's current postEvt to NONBLOCK,
+ *              by set enable timeout checking and with timeout value '0',
+ *              which means ObjX's postEVT will return TOS_RESULT_TIMEOUT if not enough resource to postEVT.
  *  DAT is ASNYC and STREAM defined by IOC knowns only by object pair;
  *
  *:->Link+MSG has Single or Hybrid Mode(a.k.a S-Mode vs H-Mode).
