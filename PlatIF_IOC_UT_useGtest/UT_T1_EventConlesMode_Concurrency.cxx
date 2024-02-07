@@ -11,7 +11,7 @@
 //      ObjC postEvt(TEST_NONBLOCK_SLEEP_5MS * $_UT_EVT_CNT_NONBLOCK).
 //    Expect:
 //      ObjA's EvtCntBlockSleep1MS is $_UT_EVT_CNT_BLOCK
-//      ObjA's EvtCntNonBlockSleep5MS>0 && EvtCntPostRstTimeout>0
+//      ObjA's EvtCntNonBlockSleep5MS>0 && ObjC's EvtCntPostRstTimeout>0
 //          && (EvtCntNonBlockSleep5MS + ObjC's EvtCntPostRstTimeout) == $_UT_EVT_CNT_NONBLOCK
 //      AND ObjB/C's postEvt() performance is still FAST(<=100us)
 //
