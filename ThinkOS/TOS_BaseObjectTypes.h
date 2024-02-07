@@ -61,7 +61,7 @@ typedef enum {
   TOS_RESULT_TIMEOUT = -40,
 
   TOS_RESULT_BUG = -100,
-  TOS_RESULT_NOT_TESTED_BUG = -101,
+  TOS_RESULT_NOT_TESTED_BUG = -101,  // RefMacro: TOS_abortNotTested()
 } TOS_Result_T;
 
 typedef enum
