@@ -98,6 +98,7 @@ static void* _UT_Case01_ThreadObjC(void* pArg) {
 TEST(UT_ConlesModeEventConcurrency, Case01) {
   IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
 
+  //===SETUP===
   // Step-1: ObjA as EvtSuber subEvt(TEST_BLOCK_SLEEP_5MS, TEST_NONBLOCK_SLEEP_1MS)
   _UT_Case01_CbPrivObjA_T CbPrivObjA = {.EvtCntBlockSleep1MS = 0, .EvtCntNonBlockSleep5MS = 0};
   IOC_EvtID_T EvtIDsObjA[] = {IOC_EVTID_TEST_BLOCK_SLEEP_1MS, IOC_EVTID_TEST_NONBLOCK_SLEEP_5MS};
@@ -111,6 +112,7 @@ TEST(UT_ConlesModeEventConcurrency, Case01) {
   TOS_Result_T Result = PLT_IOC_subEVT(LinkID, &EvtSubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
+  //===EXECUTE===
   // Step-2: ObjB/C as EvtPuber postEvt(TEST_BLOCK_SLEEP_5MS, TEST_NONBLOCK_SLEEP_1MS) in each's thread context
   pthread_t ThreadID[2];  // ObjB/C
   pthread_create(&ThreadID[0], NULL, _UT_Case01_ThreadObjB, NULL);
@@ -122,20 +124,22 @@ TEST(UT_ConlesModeEventConcurrency, Case01) {
   pthread_join(ThreadID[0], NULL);
   pthread_join(ThreadID[1], NULL);
 
-  // Step-4: ObjA unsubEvt(TEST_BLOCK_SLEEP_5MS, TEST_NONBLOCK_SLEEP_1MS) when all CbProcEvt_F() is done
+  //===VERIFY===
+  // Step-4: Check ObjA's EvtCntBlockSleep1MS is $_UT_EVT_CNT_BLOCK
+  ASSERT_EQ(CbPrivObjA.EvtCntBlockSleep1MS, _UT_EVT_CNT_BLOCK);  // CheckPoint
+
+  // Step-5: Check ObjA's EvtCntNonBlockSleep5MS>0 && EvtCntPostRstTimeout>0
+  //          && (EvtCntNonBlockSleep5MS + ObjC's EvtCntPostRstTimeout) == $_UT_EVT_CNT_NONBLOCK
+  ASSERT_GT(CbPrivObjA.EvtCntNonBlockSleep5MS, 0);                                                       // CheckPoint
+  ASSERT_GT(CbPrivObjC.EvtCntPostRstTimeout, 0);                                                         // CheckPoint
+  ASSERT_EQ(CbPrivObjA.EvtCntNonBlockSleep5MS + CbPrivObjC.EvtCntPostRstTimeout, _UT_EVT_CNT_NONBLOCK);  // CheckPoint
+
+  //===CLEANUP===
+  // Step-6: ObjA unsubEvt(TEST_BLOCK_SLEEP_5MS, TEST_NONBLOCK_SLEEP_1MS) when all CbProcEvt_F() is done
   IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {
       .CbProcEvt_F = _UT_Case01_CbProcEvtObjA_F,
       .pCbPriv = &CbPrivObjA,
   };
   Result = PLT_IOC_unsubEVT(LinkID, &EvtUnsubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // Check
-
-  // Step-5: Check ObjA's EvtCntBlockSleep1MS is $_UT_EVT_CNT_BLOCK
-  ASSERT_EQ(CbPrivObjA.EvtCntBlockSleep1MS, _UT_EVT_CNT_BLOCK);  // CheckPoint
-
-  // Step-6: Check ObjA's EvtCntNonBlockSleep5MS>0 && EvtCntPostRstTimeout>0
-  //          && (EvtCntNonBlockSleep5MS + ObjC's EvtCntPostRstTimeout) == $_UT_EVT_CNT_NONBLOCK
-  ASSERT_GT(CbPrivObjA.EvtCntNonBlockSleep5MS, 0);                                                       // CheckPoint
-  ASSERT_GT(CbPrivObjC.EvtCntPostRstTimeout, 0);                                                         // CheckPoint
-  ASSERT_EQ(CbPrivObjA.EvtCntNonBlockSleep5MS + CbPrivObjC.EvtCntPostRstTimeout, _UT_EVT_CNT_NONBLOCK);  // CheckPoint
 }
