@@ -26,11 +26,17 @@
  *          [D] Dynamic: ObjX call PLT_IOC_onlineService in its context to online a service and identfied as $SrvID,
  *          [S] Static: ObjX use PLT_IOC_defineService in its source to define and identfied by $SrvArgs::SrvURL.
  *
- *:->MSG is a Command(a.k.a CMD) or Event(a.k.a EVT) or Data(a.k.a DAT).
- *      CMD is SYNC and DGRAM defined by IOC identified by CmdID;
- *      EVT is ASYNC and DGRAM defined by IOC identified by EvtID;
- *        Its default property is MAYBLOCK+NODROP+NOTIMEOUT, and may be changed by setLinkParams or IOC_Options_T.
- *      DAT is ASNYC and STREAM defined by IOC knowns only by object pair;
+ *:->MSG is a Command(a.k.a CMD) or an Event(a.k.a EVT) or a piece of Data(a.k.a DAT).
+ *  CMD is SYNC and DGRAM defined by IOC identified by CmdID;
+ *  EVT is ASYNC and DGRAM defined by IOC identified by EvtID;
+ *    Its default property is ASYNC+MAYBLOCK+NODROP+NOTIMEOUT, and may be changed by setLinkParams or IOC_Options_T.
+ *      ASYNC：means ObjX in its current context postEVT to LinkID,
+ *          then ObjY's CbProcEvt_F will be callbacked in IOC's context, not in ObjX's context.
+ *          Here IOC's context is designed&implemented by IOC, may be a standalone thread or a thread pool.
+ *          USE setLinkParams to change Link's each postEvt to SYNC,
+ *          USE IOC_Options_T to change Link's current postEvt to SYNC,
+ *              which means ObjY's CbProcEvt_F callbacked in ObjX's context.
+ *  DAT is ASNYC and STREAM defined by IOC knowns only by object pair;
  *
  *:->Link+MSG has Single or Hybrid Mode(a.k.a S-Mode vs H-Mode).
  *      S-Mode: means a $LinkID ONLY used by ONE of execCMD or postEVT or sendDAT.
