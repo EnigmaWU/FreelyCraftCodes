@@ -69,7 +69,7 @@
  *  [1]: ObjX as service, accept connection from ObjY, and ObjX ask ObjY to execute commands.
  *      ObjX: PLT_IOC_onlineService($SrvArgs::SrvURL) -> $SrvID_atObjX
  *      ObjY: PLT_IOC_connectService($LinkArgs::SrvURL) -> $LinkID_atObjY
- *        |~> ObjX: PLT_IOC_acceptService($SrvID_atObjX) -> $LinkID_atObjX
+ *        |~> ObjX: PLT_IOC_acceptLink($SrvID_atObjX) -> $LinkID_atObjX
  *      ObjX: PLT_IOC_execCMD($LinkID_atObjX, $CmdID) -> ...
  *        |~> ObjY: PLT_IOC_recvCMD($LinkID_atObjY) -> $CmdID ... $CmdResult -> PLT_IOC_ackCMD($LinkID_atObjY)
  *          |~> ObjX: <resume>PLT_IOC_execCMD() -> $CmdResult
@@ -300,10 +300,10 @@ TOS_Result_T PLT_IOC_deinitModule(/*ARG_IN*/TOS_ModuleObjectID_T ModObjID);
 TOS_Result_T PLT_IOC_onlineService(
     /*ARG_OUT*/IOC_ServiceID_T *pSrvID, 
     /*ARG_IN*/const IOC_SrvArgs_pT pSrvArgs);
-TOS_Result_T PLT_IOC_acceptService(
-    /*ARG_IN*/IOC_ServiceID_T SrvID, 
-    /*ARG_OUT*/IOC_LinkID_T *pLinkID,
-    /*ARG_IN_OPTIONAL*/IOC_Options_pT pOptions);
+TOS_Result_T PLT_IOC_acceptLink(
+    /*ARG_IN*/ IOC_ServiceID_T SrvID,
+    /*ARG_OUT*/ IOC_LinkID_T *pLinkID,
+    /*ARG_IN_OPTIONAL*/ IOC_Options_pT pOptions);
 TOS_Result_T PLT_IOC_offlineService(/*ARG_IN*/IOC_ServiceID_T SrvID);
 
 //---> ConetMode: Static Service
@@ -345,7 +345,7 @@ TOS_Result_T PLT_IOC_recvDAT(
  *  OR Any ObjY who subEVT this LinkID, and matched $EvtIDs will be callbacked via $CbProcEvt_F with pEvtDesc argment.
  *
  * @param LinkID: LinkID to post EVT used by EvtPuber, and to subscribe EVT used by EvtSuber.
- *          In ConetMode, LinkID is returned by PLT_IOC_connectService or PLT_IOC_acceptService.
+ *          In ConetMode, LinkID is returned by PLT_IOC_connectService or PLT_IOC_acceptLink.
  *          In ConlesMode, LinkID is pre-defined IOC_CONLESMODE_AUTO_LINK_ID.
  * @param pEvtDesc: EVT to post, RefMore: IOC_EvtDesc_T.
  *      IF postEvt SUCCESS, pEvtDesc is copied away by IOC, and ObjX can reuse it.
@@ -369,7 +369,7 @@ TOS_Result_T PLT_IOC_listenEVT(
 /**
  * @brief ObjX call PLT_IOC_subEvt to subscribe EVT, when post EVT to LinkID, ObjX's $CbProcEvt_F will be callbacked.
  * @param LinkID: LinkID to subscribe EVT used by EvtSuber, and to post EVT used by EvtPuber.
- *          In ConetMode, LinkID is returned by PLT_IOC_connectService or PLT_IOC_acceptService.
+ *          In ConetMode, LinkID is returned by PLT_IOC_connectService or PLT_IOC_acceptLink.
  *          In ConlesMode, LinkID is pre-defined IOC_CONLESMODE_AUTO_LINK_ID.
  * @param pEvtSubArgs: EvtSuber's $CbProcEvt_F and $pCbPriv, and $EvtIDs to subscribe.
  *
