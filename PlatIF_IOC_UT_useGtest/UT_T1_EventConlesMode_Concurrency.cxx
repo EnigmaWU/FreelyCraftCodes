@@ -136,3 +136,93 @@ TEST(UT_ConlesModeEventConcurrency, Case01) {
   Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // Check
 }
+
+//===>Case[02]: ObjA/B/C/... as EvtSuber, ObjZ as EvtPuber to postEVT(TEST_MAYBLOCK_SLEEP_1MS)
+//  ObjA/...(=$_UT_CASE02_EVT_SUBER_CNT) call subEVT_inConlesMode(TEST_MAYBLOCK_SLEEP_1MS)
+//  ObjZ call postEVT_inConlesMode(TEST_MAYBLOCK_SLEEP_1MS * $_UT_CASE02_MAYBLOCK_EVT_CNT)
+//  Expect:
+//    Each ObjA/...'s CbProcEvt_F() is callbacked $_UT_CASE02_MAYBLOCK_EVT_CNT times
+//    AND ObjZ's postEVT_inConlesMode() PerfFAST(FROM<=100us,TO<=1ms * $_UT_CASE02_EVT_SUBER_CNT)
+
+typedef struct {
+  ULONG_T EvtCntMaySleep1MS;
+} _UT_Case02_CbPrivObjX_T, *_UT_Case02_CbPrivObjX_pT;
+
+static TOS_Result_T _UT_Case02_CbProcEvtObjX_F(IOC_EvtDesc_pT pEvtDesc, void* pCbPriv) {
+  _UT_Case02_CbPrivObjX_pT pCbPrivObjX = (_UT_Case02_CbPrivObjX_pT)pCbPriv;
+
+  if (pEvtDesc->EvtID == IOC_EVTID_TEST_MAYBLOCK_SLEEP_1MS) {
+    pCbPrivObjX->EvtCntMaySleep1MS++;
+    usleep(1000);
+  } else {
+    EXPECT_TRUE(false) << "Unknown EvtID: " << pEvtDesc->EvtID;
+  }
+
+  return TOS_RESULT_SUCCESS;
+}
+
+TEST(UT_ConlesModeEventConcurrency, Case02) {
+#define _UT_CASE02_EVT_SUBER_CNT 10
+#define _UT_CASE02_MAYBLOCK_EVT_CNT 1000
+
+  //===SETUP===
+  // Step-1: ObjA/... as EvtSuber subEvt(TEST_MAYBLOCK_SLEEP_1MS)
+  _UT_Case02_CbPrivObjX_T CbPrivObjX[_UT_CASE02_EVT_SUBER_CNT] = {};
+
+  for (int i = 0; i < _UT_CASE02_EVT_SUBER_CNT; i++) {
+    IOC_EvtID_T EvtIDsObjX[] = {IOC_EVTID_TEST_MAYBLOCK_SLEEP_1MS};
+    IOC_EvtSubArgs_T EvtSubArgsObjX = {
+        .CbProcEvt_F = _UT_Case02_CbProcEvtObjX_F,
+        .pCbPriv = &CbPrivObjX[i],
+        .EvtNum = TOS_calcArrayElmtCnt(EvtIDsObjX),
+        .pEvtIDs = EvtIDsObjX,
+    };
+
+    TOS_Result_T Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjX);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
+  }
+
+  //===EXECUTE===
+  // Step-2: ObjZ as EvtPuber postEvt(TEST_MAYBLOCK_SLEEP_1MS * $_UT_CASE02_MAYBLOCK_EVT_CNT)
+  for (int i = 0; i < _UT_CASE02_MAYBLOCK_EVT_CNT; i++) {
+    struct timeval BeforePostTime, AfterPostTime;
+    IOC_EvtDesc_T EvtDescObjZ = {.EvtID = IOC_EVTID_TEST_MAYBLOCK_SLEEP_1MS};
+
+    gettimeofday(&BeforePostTime, NULL);
+    TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDescObjZ, NULL);
+    gettimeofday(&AfterPostTime, NULL);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
+
+    ULONG_T PostTimeUS = (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + AfterPostTime.tv_usec - BeforePostTime.tv_usec;
+    ULONG_T PostBlockTimeUS = (1000 + 500) * _UT_CASE02_EVT_SUBER_CNT;  // 500=ASyncPerfFAST(<=500us) vs 100=SyncPerfFAST(<=100us)
+                                                                        // 1000=MayBlock@CbProcEvt_Sleep1MS
+    EXPECT_LE(PostTimeUS, PostBlockTimeUS);                             // CheckPoint
+  }
+
+  // A hard-coded wait sleep to wait for all CbProcEvt_F() is done
+  sleep(1);
+
+  //===VERIFY===
+  // Step-3: Each ObjA/...'s CbProcEvt_F() is callbacked $_UT_CASE02_MAYBLOCK_EVT_CNT times
+  for (int i = 0; i < _UT_CASE02_EVT_SUBER_CNT; i++) {
+    ASSERT_EQ(CbPrivObjX[i].EvtCntMaySleep1MS, _UT_CASE02_MAYBLOCK_EVT_CNT);  // CheckPoint
+  }
+
+  //===CLEANUP===
+  // Step-4: ObjA/... unsubEvt(TEST_MAYBLOCK_SLEEP_1MS) when all CbProcEvt_F() is done
+  for (int i = 0; i < _UT_CASE02_EVT_SUBER_CNT; i++) {
+    IOC_EvtUnsubArgs_T EvtUnsubArgsObjX = {
+        .CbProcEvt_F = _UT_Case02_CbProcEvtObjX_F,
+        .pCbPriv = &CbPrivObjX[i],
+    };
+    TOS_Result_T Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjX);
+    ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
+  }
+}
+
+//===>Case[03]: ObjA/B/C/... as EvtSuber, ObjZ as EvtPuber to postEVT(TEST_NONBLOCK_SLEEP_5MS)
+// TODO(@W)
+//===>Case[04]: ObjA as EvtSuber, ObjB/C/D/... as EvtPuber to postEVT(TEST_MAYBLOCK_SLEEP_1MS)
+// TODO(@W)
+//===>Case[05]: ObjA as EvtSuber, ObjB/C/D/... as EvtPuber to postEVT(TEST_NONBLOCK_SLEEP_5MS)
+// TODO(@W)
