@@ -5,13 +5,14 @@
 //  and their behavior is still work as expected.
 
 //===>Case[01]: ObjA as EvtSuber, ObjB/C as EvtPuber,
-//      ObjB postEvt(TEST_BLOCK_SLEEP_1MS * $_UT_EVT_CNT_BLOCK),
+//      ObjB postEvt(TEST_MAYBLOCK_SLEEP_1MS * $_UT_EVT_CNT_MAYBLOCK),
 //      ObjC postEvt(TEST_NONBLOCK_SLEEP_5MS * $_UT_EVT_CNT_NONBLOCK).
 //    Expect:
-//      ObjA's EvtCntBlockSleep1MS is $_UT_EVT_CNT_BLOCK
+//      ObjA's EvtCntBlockSleep1MS is $_UT_EVT_CNT_MAYBLOCK
 //      ObjA's EvtCntNonBlockSleep5MS>0 && ObjC's EvtCntPostRstTimeout>0
 //          && (EvtCntNonBlockSleep5MS + ObjC's EvtCntPostRstTimeout) == $_UT_EVT_CNT_NONBLOCK
-//      AND ObjB/C's postEvt() performance is still FAST(<=100us)
+//      AND ObjB's postEvt() PerfFAST(FROM<=100us,TO<=5ms(+~3ms)) caused by MAYBLOCK of TEST_NONBLOCK_SLEEP_5MS,
+//          ObjC's postEvt() PerfFAST(<=100us,TO<=100us) caused by NONBLOCK.
 //
 //  Step-1:
 
@@ -23,7 +24,7 @@ typedef struct {
 static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pCbPriv) {
   _UT_Case01_CbPrivObjA_pT pCbPrivObjA = (_UT_Case01_CbPrivObjA_pT)pCbPriv;
 
-  if (pEvtDesc->EvtID == IOC_EVTID_TEST_BLOCK_SLEEP_1MS) {
+  if (pEvtDesc->EvtID == IOC_EVTID_TEST_MAYBLOCK_SLEEP_1MS) {
     pCbPrivObjA->EvtCntBlockSleep1MS++;
     usleep(1000);
   } else if (pEvtDesc->EvtID == IOC_EVTID_TEST_NONBLOCK_SLEEP_5MS) {
@@ -36,13 +37,13 @@ static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pC
   return TOS_RESULT_SUCCESS;
 }
 
-#define _UT_EVT_CNT_BLOCK 1000
+#define _UT_EVT_CNT_MAYBLOCK 1000
 #define _UT_EVT_CNT_NONBLOCK 1000000
 
 static void* _UT_Case01_ThreadObjB(void* pArg) {
-  IOC_EvtDesc_T EvtDescObjB = {.EvtID = IOC_EVTID_TEST_BLOCK_SLEEP_1MS};
+  IOC_EvtDesc_T EvtDescObjB = {.EvtID = IOC_EVTID_TEST_MAYBLOCK_SLEEP_1MS};
 
-  for (int i = 0; i < _UT_EVT_CNT_BLOCK; i++) {
+  for (int i = 0; i < _UT_EVT_CNT_MAYBLOCK; i++) {
     struct timeval BeforePostTime, AfterPostTime;
 
     gettimeofday(&BeforePostTime, NULL);
@@ -93,7 +94,7 @@ TEST(UT_ConlesModeEventConcurrency, Case01) {
   //===SETUP===
   // Step-1: ObjA as EvtSuber subEvt(TEST_BLOCK_SLEEP_5MS, TEST_NONBLOCK_SLEEP_1MS)
   _UT_Case01_CbPrivObjA_T CbPrivObjA = {.EvtCntBlockSleep1MS = 0, .EvtCntNonBlockSleep5MS = 0};
-  IOC_EvtID_T EvtIDsObjA[] = {IOC_EVTID_TEST_BLOCK_SLEEP_1MS, IOC_EVTID_TEST_NONBLOCK_SLEEP_5MS};
+  IOC_EvtID_T EvtIDsObjA[] = {IOC_EVTID_TEST_MAYBLOCK_SLEEP_1MS, IOC_EVTID_TEST_NONBLOCK_SLEEP_5MS};
   IOC_EvtSubArgs_T EvtSubArgsObjA = {
       .CbProcEvt_F = _UT_Case01_CbProcEvtObjA_F,
       .pCbPriv = &CbPrivObjA,
@@ -117,8 +118,8 @@ TEST(UT_ConlesModeEventConcurrency, Case01) {
   pthread_join(ThreadID[1], NULL);
 
   //===VERIFY===
-  // Step-4: Check ObjA's EvtCntBlockSleep1MS is $_UT_EVT_CNT_BLOCK
-  ASSERT_EQ(CbPrivObjA.EvtCntBlockSleep1MS, _UT_EVT_CNT_BLOCK);  // CheckPoint
+  // Step-4: Check ObjA's EvtCntBlockSleep1MS is $_UT_EVT_CNT_MAYBLOCK
+  ASSERT_EQ(CbPrivObjA.EvtCntBlockSleep1MS, _UT_EVT_CNT_MAYBLOCK);  // CheckPoint
 
   // Step-5: Check ObjA's EvtCntNonBlockSleep5MS>0 && EvtCntPostRstTimeout>0
   //          && (EvtCntNonBlockSleep5MS + ObjC's EvtCntPostRstTimeout) == $_UT_EVT_CNT_NONBLOCK
