@@ -180,7 +180,7 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
 
   //-------------------------------------------------------------------------------------------------------------------
   if (pOptions && (pOptions->IDs & IOC_OPTID_SYNC_MODE)) {
-    TOS_abortNotTested();
+    // TOS_abortNotTested(); // @TEST(UT_ConlesModeEventPerf, Case01)
     IsSyncMode = true;
   }
 
@@ -239,7 +239,7 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
 
       //-------------------------------------------------------------------------------------------------------------------
       if (IsSyncMode || _mConlesEvtCtx.IsSyncMode) {
-        pSavdSubArgs->CbProcEvt_F(pEvtDesc, pSavdSubArgs->pCbPriv);
+        Result = pSavdSubArgs->CbProcEvt_F(pEvtDesc, pSavdSubArgs->pCbPriv);
       } else /*ASyncMode*/ {
         pthread_mutex_lock(&_mConlesEvtCtx.ASyncThreadIDMutex);
         if (_mConlesEvtCtx.ASyncThreadID && IsNonBlock) {
