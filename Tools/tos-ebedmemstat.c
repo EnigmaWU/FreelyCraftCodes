@@ -35,12 +35,12 @@
 typedef struct 
 {
     //Read from /proc/meminfo
-    unsigned long MemTotal;
-    unsigned long MemFree;
-    unsigned long MemAvailable;
-    unsigned long Buffers;
-    unsigned long Cached;
-    unsigned long Shmem;
+    ULONG_T MemTotal;
+    ULONG_T MemFree;
+    ULONG_T MemAvailable;
+    ULONG_T Buffers;
+    ULONG_T Cached;
+    ULONG_T Shmem;
 } TOS_EMS_Overview_T, *TOS_EMS_Overview_pT;
 
 typedef struct 
@@ -48,22 +48,22 @@ typedef struct
     pid_t PID;
 
     //read from /proc/[pid]/smaps
-    unsigned long VMZ;//Current process's virtual memory size
-    unsigned long RSS;//Current process's resident set size
-    unsigned long PSS;//Current process's proportional set size
-    unsigned long USS;//Current process's unique set size
-    
-    #if 0
-    unsigned long Heap;//Current process's heap size
-    unsigned long Anonymous;//Current process's anonymous size
-    unsigned long Stack;//Current process's stack size
+    ULONG_T VMZ;  // Current process's virtual memory size
+    ULONG_T RSS;  // Current process's resident set size
+    ULONG_T PSS;  // Current process's proportional set size
+    ULONG_T USS;  // Current process's unique set size
 
-    unsigned long SharedObject;//Current process's shared object size
-    unsigned long FileMMAP;//Current process's file mmap size
+#if 0
+    ULONG_T Heap;//Current process's heap size
+    ULONG_T Anonymous;//Current process's anonymous size
+    ULONG_T Stack;//Current process's stack size
+
+    ULONG_T SharedObject;//Current process's shared object size
+    ULONG_T FileMMAP;//Current process's file mmap size
     
-    unsigned long SocketBuffer;//Current process's socket buffer size
-    unsigned long FileBuffer;//Current process's file buffer size
-    #endif
+    ULONG_T SocketBuffer;//Current process's socket buffer size
+    ULONG_T FileBuffer;//Current process's file buffer size
+#endif
 } TOS_EMS_USpaceProcess_T, *TOS_EMS_USpaceProcess_pT;
 
 //readUspaceProcess from /proc/[pid]/smaps and /proc/[pid]/maps,
@@ -110,7 +110,7 @@ typedef struct
     TOS_EMS_StatDataSource_T StatDataSource;//RefArgs: -S/-T/-TT/-TTT
     TOS_EMS_DetailLevel_T DetailLevel;//RefArgs: -Dn
 
-    unsigned long StatCount;//RefArgs: -Cn, default is 1
+    ULONG_T StatCount;  // RefArgs: -Cn, default is 1
 
     TOS_EMS_Overview_T  Overview;
 

@@ -22,8 +22,8 @@
 
  typedef struct 
  {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long KeepAliveTotalCnt, KeepAliveNextSeqID;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T KeepAliveTotalCnt, KeepAliveNextSeqID;
 
     sem_t *pSemAllProced;
  } _UT_EvtSuberPrivT01_T, *_UT_EvtSuberPrivT01_pT;      

@@ -16,7 +16,7 @@
 
 // RefCode: TEST(EventConlesModeTypical, Case01) in UT_T1_EventConlesMode_Typical.cxx
 typedef struct {
-  unsigned long MagicValue;
+  ULONG_T MagicValue;
 } _UT_Case01_CbPrivObjA_T, *_UT_Case01_CbPrivObjA_pT;
 
 static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pCbPriv) {
@@ -143,8 +143,8 @@ TEST(ConlesModeState, Case02) {
 //  Step-5: Check ObjA's private TotalEvtCnt is $_UT_KEEPALIVE_EVT_CNT*4, and TryLockFailCnt is 0
 
 typedef struct {
-  unsigned long TotalEvtCnt;
-  unsigned long TryLockFailCnt;
+  ULONG_T TotalEvtCnt;
+  ULONG_T TryLockFailCnt;
 
   pthread_mutex_t Mutex;
 
@@ -176,7 +176,7 @@ static TOS_Result_T _UT_Case03_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pC
 static void* _UT_Case03_ThreadObjX(void* pArg) {
   IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
   IOC_EvtDesc_T EvtDescObjX = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
-  unsigned long TotalEvtCnt = 0;
+  ULONG_T TotalEvtCnt = 0;
 
   while (1) {
     PLT_IOC_postEVT(LinkID, &EvtDescObjX, NULL);

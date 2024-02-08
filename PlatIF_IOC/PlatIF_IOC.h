@@ -225,7 +225,7 @@ typedef enum {
 
 typedef struct
 {
-    unsigned long SeqID;
+    ULONG_T SeqID;
     IOC_MsgFlags_T Flags;
 } IOC_MsgDesc_T, *IOC_MsgDesc_pT;
 typedef struct 
@@ -264,7 +264,7 @@ typedef struct
 {
     IOC_CbProcEvt_F CbProcEvt_F;
     void *pCbPriv;
-    unsigned long EvtNum;
+    ULONG_T EvtNum;
     IOC_EvtID_T *pEvtIDs;
 } IOC_EvtSubArgs_T, *IOC_EvtSubArgs_pT;
 

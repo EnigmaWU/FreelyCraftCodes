@@ -12,8 +12,8 @@ extern "C" {
 #endif
 
 typedef struct {
-  unsigned long MaxSuberNum;
-  unsigned long CurSuberNum;
+  ULONG_T MaxSuberNum;
+  ULONG_T CurSuberNum;
 
   IOC_EvtSubArgs_pT pSuberArgs;
   pthread_mutex_t Mutex;
@@ -54,7 +54,7 @@ static TOS_Result_T __IOC_ConlesMode_subEVT(const IOC_EvtSubArgs_pT pEvtSubArgs)
     }
   }
 
-  unsigned long FreeSuberIdx = 0;
+  ULONG_T FreeSuberIdx = 0;
   for (; FreeSuberIdx < _mConlesEvtCtx.MaxSuberNum; FreeSuberIdx++) {
     if (_mConlesEvtCtx.pSuberArgs[FreeSuberIdx].CbProcEvt_F == NULL) {
       break;
@@ -98,7 +98,7 @@ static TOS_Result_T __IOC_ConlesMode_unsubEVT(const IOC_EvtUnsubArgs_pT pEvtUnsu
   }
 
   if (pEvtUnsubArgs == NULL) {
-    for (unsigned long Idx = 0; Idx < _mConlesEvtCtx.CurSuberNum; Idx++) {
+    for (ULONG_T Idx = 0; Idx < _mConlesEvtCtx.CurSuberNum; Idx++) {
       IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[Idx];
       if (pSavdSubArgs->pEvtIDs != NULL) {
         free(pSavdSubArgs->pEvtIDs);
@@ -110,7 +110,7 @@ static TOS_Result_T __IOC_ConlesMode_unsubEVT(const IOC_EvtUnsubArgs_pT pEvtUnsu
     _mConlesEvtCtx.CurSuberNum = 0;
     Result = TOS_RESULT_SUCCESS;
   } else {
-    for (unsigned long Idx = 0; Idx < _mConlesEvtCtx.CurSuberNum; Idx++) {
+    for (ULONG_T Idx = 0; Idx < _mConlesEvtCtx.CurSuberNum; Idx++) {
       IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[Idx];
       if (pSavdSubArgs->CbProcEvt_F == pEvtUnsubArgs->CbProcEvt_F && pSavdSubArgs->pCbPriv == pEvtUnsubArgs->pCbPriv) {
         free(pSavdSubArgs->pEvtIDs);
@@ -343,7 +343,7 @@ TEST(UT_ConlesModeEventINFILE, Case01_subEVT) {
   ASSERT_EQ(Result, TOS_RESULT_NOT_ENOUGH_RESOURCE);  // CheckPoint
 
   //===>TEARDOWN
-  for (unsigned long Idx = 0; Idx < _mConlesEvtCtx.MaxSuberNum; Idx++) {
+  for (ULONG_T Idx = 0; Idx < _mConlesEvtCtx.MaxSuberNum; Idx++) {
     IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[Idx];
     if (pSavdSubArgs && pSavdSubArgs->pEvtIDs != NULL) {
       free(pSavdSubArgs->pEvtIDs);
@@ -367,9 +367,9 @@ TEST(UT_ConlesModeEventINFILE, Case02_subEVT) {
   _mConlesEvtCtx.MaxSuberNum = 1;
   _mConlesEvtCtx.CurSuberNum = 0;
 
-  unsigned long RptNumMax = 1024;
+  ULONG_T RptNumMax = 1024;
 
-  for (unsigned long RptNum = 0; RptNum < RptNumMax; RptNum++) {
+  for (ULONG_T RptNum = 0; RptNum < RptNumMax; RptNum++) {
     IOC_EvtSubArgs_T SubArgsA = {
         .CbProcEvt_F = (IOC_CbProcEvt_F)0x20240126,
         .pCbPriv = (void*)0x20240127,
@@ -388,7 +388,7 @@ TEST(UT_ConlesModeEventINFILE, Case02_subEVT) {
   }
 
   //===>TEARDOWN
-  for (unsigned long Idx = 0; Idx < _mConlesEvtCtx.MaxSuberNum; Idx++) {
+  for (ULONG_T Idx = 0; Idx < _mConlesEvtCtx.MaxSuberNum; Idx++) {
     IOC_EvtSubArgs_pT pSavdSubArgs = &_mConlesEvtCtx.pSuberArgs[Idx];
     if (pSavdSubArgs && pSavdSubArgs->pEvtIDs != NULL) {
       free(pSavdSubArgs->pEvtIDs);

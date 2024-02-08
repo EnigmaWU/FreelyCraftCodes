@@ -72,10 +72,10 @@
 
  typedef struct 
  {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long KeepAliveTotalCnt, KeepAliveNextSeqID;
+   TOS_EvtOperID_T EvtSuberID;
+   ULONG_T KeepAliveTotalCnt, KeepAliveNextSeqID;
 
-    sem_t *pSemAllProced;
+   sem_t* pSemAllProced;
  } _UT_EvtSuberPrivCase01_T, *_UT_EvtSuberPrivCase01_pT;      
 
 __attribute__((no_sanitize_thread))
@@ -202,8 +202,8 @@ TEST(UT_T1_PubSubEvt_Typical, Case01)
 
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long KeepAliveTotalCnt, KeepAliveProcedCnt;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T KeepAliveTotalCnt, KeepAliveProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase02_ofB_T, *_UT_EvtSuberPrivCase02_ofB_pT;
@@ -229,8 +229,8 @@ static TOS_Result_T __UT_Case02_CbProcEvtSRT_ofB
 
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long MsgDataTotalCnt, MsgDataProcedCnt;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T MsgDataTotalCnt, MsgDataProcedCnt;
 
     uint32_t    MsgDataNextValue;//0,1,2,...,MsgDataTotalCnt-1
 
@@ -261,9 +261,9 @@ static TOS_Result_T __UT_Case02_CbProcEvtSRT_ofC
 
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long KeepAliveTotalCnt, KeepAliveProcedCnt;
-    unsigned long MsgDataTotalCnt, MsgDataProcedCnt;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T KeepAliveTotalCnt, KeepAliveProcedCnt;
+    ULONG_T MsgDataTotalCnt, MsgDataProcedCnt;
 
     uint32_t    MsgDataNextValue;//0,1,2,...,MsgDataTotalCnt-1
 
@@ -466,8 +466,8 @@ TEST(UT_T1_PubSubEvt_Typical, Case02)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long EchoResponseTotalCnt, EchoResponseProcedCnt;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T EchoResponseTotalCnt, EchoResponseProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase03_ofA_T, *_UT_EvtSuberPrivCase03_ofA_pT;
@@ -493,8 +493,8 @@ static TOS_Result_T __UT_Case03_CbProcEvtSRT_ofA
 
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long EchoRequestTotalCnt, EchoRequestProcedCnt;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T EchoRequestTotalCnt, EchoRequestProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase03_ofB_T, *_UT_EvtSuberPrivCase03_ofB_pT;
@@ -525,8 +525,8 @@ static TOS_Result_T __UT_Case03_CbProcEvtSRT_ofB
 
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long EchoResponseTotalCnt, EchoResponseProcedCnt;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T EchoResponseTotalCnt, EchoResponseProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase03_ofCD_T, *_UT_EvtSuberPrivCase03_ofCD_pT;
@@ -700,22 +700,22 @@ typedef struct
         struct
         {
             TOS_EvtOperID_T EvtPuberID;
-            unsigned long CmdX1PostedCnt, CmdX2PostedCnt;
+            ULONG_T CmdX1PostedCnt, CmdX2PostedCnt;
         } RCAgentPriv;
 
         struct 
         {
             TOS_EvtOperID_T EvtPuberID;
-            unsigned long CmdX3PostedCnt, CmdX4PostedCnt;
+            ULONG_T CmdX3PostedCnt, CmdX4PostedCnt;
         } CDObjPriv;
     };
 } _UT_CtxThreadABCDE_ModObj_T, *_UT_CtxThreadABCDE_ModObj_pT;
 
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long KeepAliveTotalCnt, KeepAliveProcedCnt;
-    unsigned long CmdAckTotalCnt, CmdAckProcedCnt;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T KeepAliveTotalCnt, KeepAliveProcedCnt;
+    ULONG_T CmdAckTotalCnt, CmdAckProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofA_T, *_UT_EvtSuberPrivCase04_ofA_pT;
@@ -827,9 +827,9 @@ static void* __UT_Case04ThreadA_ofVMainObj( void* arg )
 //RCAgentObj in ThreadB(RefMore: [Case04]:UT_B(as RemogeControlAgentObj a.k.a RCAgentObj)@Thread_B
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long MsgDataTotalCnt;
-    unsigned long MsgDataProcedCnt;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T MsgDataTotalCnt;
+    ULONG_T MsgDataProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofB_T, *_UT_EvtSuberPrivCase04_ofB_pT;
@@ -992,16 +992,16 @@ static void* __UT_Case04ThreadB_ofRCAgentObj( void* arg )
 //ChassicObj in ThreadC(RefMore: [Case04]:UT_C(as ChassicObj)@Thread_C
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
+    TOS_EvtOperID_T EvtSuberID;
 
-    unsigned long CmdX1TotalCnt;
-    unsigned long CmdX1ProcedCnt;
+    ULONG_T CmdX1TotalCnt;
+    ULONG_T CmdX1ProcedCnt;
 
-    unsigned long CmdX3TotalCnt;
-    unsigned long CmdX3ProcedCnt;
+    ULONG_T CmdX3TotalCnt;
+    ULONG_T CmdX3ProcedCnt;
 
-    unsigned long MsgDataTotalCnt;
-    unsigned long MsgDataProcedCnt;
+    ULONG_T MsgDataTotalCnt;
+    ULONG_T MsgDataProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofC_T, *_UT_EvtSuberPrivCase04_ofC_pT;
@@ -1129,16 +1129,16 @@ static void* __UT_Case04ThreadC_ofChassicObj( void* arg )
 //PalletObj in ThreadD(RefMore: [Case04]:UT_D(as PalletObj)@Thread_D
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
+    TOS_EvtOperID_T EvtSuberID;
 
-    unsigned long CmdX2TotalCnt;
-    unsigned long CmdX2ProcedCnt;
+    ULONG_T CmdX2TotalCnt;
+    ULONG_T CmdX2ProcedCnt;
 
-    unsigned long CmdX4TotalCnt;
-    unsigned long CmdX4ProcedCnt;
+    ULONG_T CmdX4TotalCnt;
+    ULONG_T CmdX4ProcedCnt;
 
-    unsigned long MsgDataTotalCnt;
-    unsigned long MsgDataProcedCnt;
+    ULONG_T MsgDataTotalCnt;
+    ULONG_T MsgDataProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofD_T, *_UT_EvtSuberPrivCase04_ofD_pT;
@@ -1310,9 +1310,9 @@ static void* __UT_Case04ThreadE_ofCDObj_postEvtCmdX4( void* arg )
 
 typedef struct 
 {
-    TOS_EvtOperID_T EvtSuberID; 
-    unsigned long MsgDataTotalCnt;
-    unsigned long MsgDataProcedCnt;
+    TOS_EvtOperID_T EvtSuberID;
+    ULONG_T MsgDataTotalCnt;
+    ULONG_T MsgDataProcedCnt;
 
     sem_t *pSemAllProced;
 } _UT_EvtSuberPrivCase04_ofE_T, *_UT_EvtSuberPrivCase04_ofE_pT;

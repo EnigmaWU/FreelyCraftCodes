@@ -15,7 +15,7 @@
 //  [Step-4]: Check ObjA's KeepAliveEvtCnt is total of ObjB/C/D/E/F's postEvt(TEST_KEEPALIVE)
 
 typedef struct {
-  unsigned long KeepAliveEvtCnt;
+  ULONG_T KeepAliveEvtCnt;
 } _UT_Case01_CbPrivObjA_T, *_UT_Case01_CbPrivObjA_pT;
 
 static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pCbPriv) {
@@ -37,7 +37,7 @@ static void* _UT_Case01_ThreadObjX(void* pArg) {
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
     gettimeofday(&AfterPostTime, NULL);
 
-    unsigned long PostTimeUS =
+    ULONG_T PostTimeUS =
         (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + (AfterPostTime.tv_usec - BeforePostTime.tv_usec);
     EXPECT_LE(PostTimeUS, 100);  // CheckPoint@Performance_FAST(<=100us)
 

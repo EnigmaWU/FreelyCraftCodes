@@ -14,7 +14,7 @@
 #define _UT_EVTCNT_KEEPALIVE 1024
 
 typedef struct _UT_Case01_EvtSuberPriv_T {
-  unsigned long KeepAliveEvtCnt;
+  ULONG_T KeepAliveEvtCnt;
 } _UT_Case01_EvtSuberPriv_T, *_UT_Case01_EvtSuberPriv_pT;
 
 static TOS_Result_T _UT_Case01_EvtSuberCbProcEvt_F(IOC_EvtDesc_pT pEvtDesc, void *pCbPriv) {
@@ -91,10 +91,10 @@ TEST(EventConlesModeTypical, Case01) {
 #define _UT_EVTCNT_COLLISION_DETECTED 1024
 
 typedef struct {
-  unsigned long KeepAliveEvtCnt;
-  unsigned long MoveVerticalAckEvtCnt;
-  unsigned long MoveHorizontalAckEvtCnt;
-  unsigned long CollisionDetectedAckEvtCnt;
+  ULONG_T KeepAliveEvtCnt;
+  ULONG_T MoveVerticalAckEvtCnt;
+  ULONG_T MoveHorizontalAckEvtCnt;
+  ULONG_T CollisionDetectedAckEvtCnt;
 } _UT_Case02_CbPrivObjA_T, *_UT_Case02_CbPrivObjA_pT;
 
 static TOS_Result_T _UT_Case02_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void *pCbPriv) {
@@ -121,8 +121,8 @@ static TOS_Result_T _UT_Case02_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void *pC
 }
 
 typedef struct {
-  unsigned long MoveVerticalEvtCnt;
-  unsigned long CollisionDetectedEvtCnt;
+  ULONG_T MoveVerticalEvtCnt;
+  ULONG_T CollisionDetectedEvtCnt;
 } _UT_Case02_CbPrivObjC_T, *_UT_Case02_CbPrivObjC_pT;
 
 static TOS_Result_T _UT_Case02_CbProcEvtObjC_F(IOC_EvtDesc_pT pEvtDesc, void *pCbPriv) {
@@ -153,8 +153,8 @@ static TOS_Result_T _UT_Case02_CbProcEvtObjC_F(IOC_EvtDesc_pT pEvtDesc, void *pC
 }
 
 typedef struct {
-  unsigned long MoveHorizontalEvtCnt;
-  unsigned long CollisionDetectedEvtCnt;
+  ULONG_T MoveHorizontalEvtCnt;
+  ULONG_T CollisionDetectedEvtCnt;
 } _UT_Case02_CbPrivObjD_T, *_UT_Case02_CbPrivObjD_pT;
 
 static TOS_Result_T _UT_Case02_CbProcEvtObjD_F(IOC_EvtDesc_pT pEvtDesc, void *pCbPriv) {

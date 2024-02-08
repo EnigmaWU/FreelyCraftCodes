@@ -18,8 +18,8 @@
 //  Step-1:
 
 typedef struct {
-  unsigned long EvtCntBlockSleep1MS;
-  unsigned long EvtCntNonBlockSleep5MS;
+  ULONG_T EvtCntBlockSleep1MS;
+  ULONG_T EvtCntNonBlockSleep5MS;
 } _UT_Case01_CbPrivObjA_T, *_UT_Case01_CbPrivObjA_pT;
 
 static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pCbPriv) {
@@ -62,7 +62,7 @@ static void* _UT_Case01_ThreadObjB(void* pArg) {
 }
 
 typedef struct {
-  unsigned long EvtCntPostRstTimeout;
+  ULONG_T EvtCntPostRstTimeout;
 } _UT_Case01_CbPrivObjC_T, *_UT_Case01_CbPrivObjC_pT;
 
 static void* _UT_Case01_ThreadObjC(void* pArg) {
