@@ -1,2 +1,3 @@
 .cache
 CMakeBuilt
+compile_commands.json
