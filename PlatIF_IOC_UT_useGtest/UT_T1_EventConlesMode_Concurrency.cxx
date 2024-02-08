@@ -1,5 +1,3 @@
-#include <unistd.h>
-
 #include "_UT_IOC_Common.h"
 
 // This is IOC_Event in ConlesMode's Concurrency UT from API user's perspective
