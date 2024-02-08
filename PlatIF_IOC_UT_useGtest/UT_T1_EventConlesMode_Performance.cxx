@@ -1,7 +1,14 @@
 #include "_UT_IOC_Common.h"
 
 // This is IOC_Event in ConlesMode's Performance UT from API user's perspective
-// Performance means SPEED vs BOTTLENECK, which means as fast as possible until reach the bottleneck.
+// Performance means SPEED/CAPACITY beyond BOTTLENECK, which defined as FAST in our context.
+//    So here as FAST as possible typically means bottleneck is caused by hardware or physical limitation,
+//      such as CPU frequency, memory bandwidth, network latency, etc.
+//    And here FAST will be limited by EVT's SYNC/ASYNC, MAYBLOCK/NONBLOCK properties.
+// SYNC will be a little FAST than ASYNC, because of no context switch when inter-thread communication,
+//  but exectally same FAST with ASYNC when inter-process/machine communication.
+// MAYBLOCK will be a little SLOW than NONBLOCK, because EvtPuber is too FAST than EvtSuber to process the event,
+//  such as EvtSuber's CbProcEvt_F() need more time to process event than EvtPuber's event occurent rate.
 
 //===>Case[01]: ObjA as EvtSuber, ObjB/C/D/E/F as EvtPuber, use TEST_KEEPALIVE to simulate multi functional
 //  objects here is ObjB/C/D/E, tell single watchdog timer object here is ObjA, that their are still alive.
