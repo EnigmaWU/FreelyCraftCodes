@@ -37,8 +37,7 @@ static void* _UT_Case01_ThreadObjX(void* pArg) {
     EXPECT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
     gettimeofday(&AfterPostTime, NULL);
 
-    ULONG_T PostTimeUS =
-        (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + (AfterPostTime.tv_usec - BeforePostTime.tv_usec);
+    ULONG_T PostTimeUS = (AfterPostTime.tv_sec - BeforePostTime.tv_sec) * 1000000 + AfterPostTime.tv_usec - BeforePostTime.tv_usec;
     EXPECT_LE(PostTimeUS, 100);  // CheckPoint@Performance_FAST(<=100us)
 
     usleep(10);
