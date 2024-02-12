@@ -1,3 +1,6 @@
+#include <pthread.h>
+#include <sys/semaphore.h>
+
 #include <cstddef>
 
 #include "_UT_IOC_Common.h"
@@ -17,23 +20,27 @@
 // RefCode: TEST(EventConlesModeTypical, Case01) in UT_T1_EventConlesMode_Typical.cxx
 typedef struct {
   ULONG_T MagicValue;
-  sem_t* pSemSyncEnterCbProcEvt;
+  pthread_mutex_t Mutex;
+  pthread_cond_t Cond;
 } _UT_Case01_CbPrivObjA_T, *_UT_Case01_CbPrivObjA_pT;
 
 static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pCbPriv) {
   _UT_Case01_CbPrivObjA_pT pCbPrivObjA = (_UT_Case01_CbPrivObjA_pT)pCbPriv;
 
-  sem_post(pCbPrivObjA->pSemSyncEnterCbProcEvt);
+  pCbPrivObjA->MagicValue = 2;
+  pthread_cond_signal(&pCbPrivObjA->Cond);
+
   sleep(3);
-  pCbPrivObjA->MagicValue = 0x87654321;
+  pCbPrivObjA->MagicValue = 3;
   return TOS_RESULT_SUCCESS;
 }
 
 TEST(UT_ConlesEventState, Case01) {
   // Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private magic value X
   _UT_Case01_CbPrivObjA_T CbPrivObjA = {0};
-  CbPrivObjA.MagicValue = 0x12345678;
-  CbPrivObjA.pSemSyncEnterCbProcEvt = sem_open("/UT_Case01_SemSyncEnterCbProcEvt", O_CREAT, 0644, 0);
+  CbPrivObjA.MagicValue = 1;
+  pthread_mutex_init(&CbPrivObjA.Mutex, NULL);
+  pthread_cond_init(&CbPrivObjA.Cond, NULL);
 
   IOC_EvtID_T EvtIDsObjA[] = {IOC_EVTID_TEST_KEEPALIVE};
   IOC_EvtSubArgs_T EvtSubArgsObjA = {
@@ -50,7 +57,8 @@ TEST(UT_ConlesEventState, Case01) {
   Result = PLT_IOC_postEVT_inConlesMode(&EvtDescObjB, NULL);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
-  sem_wait(CbPrivObjA.pSemSyncEnterCbProcEvt);  // Wait ObjA's CbProcEvt_F() enter
+  pthread_mutex_lock(&CbPrivObjA.Mutex);
+  pthread_cond_wait(&CbPrivObjA.Cond, &CbPrivObjA.Mutex);  // Wait ObjA's CbProcEvt_F() enter
 
   // Step-3: ObjA unsubEvt(TEST_KEEPALIVE)
   IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {.CbProcEvt_F = _UT_Case01_CbProcEvtObjA_F, .pCbPriv = &CbPrivObjA};
@@ -58,10 +66,9 @@ TEST(UT_ConlesEventState, Case01) {
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
   // Check ObjA's private magic value is Y now
-  ASSERT_EQ(CbPrivObjA.MagicValue, 0x87654321);  // CheckPoint
+  ASSERT_EQ(CbPrivObjA.MagicValue, 3);  // CheckPoint
 
   //===CLEANUP===
-  sem_close(CbPrivObjA.pSemSyncEnterCbProcEvt);
 }
 
 //===> Case[02]: Same as Case[01], but ObjB postEvt in a thread context

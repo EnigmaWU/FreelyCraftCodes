@@ -20,6 +20,8 @@ typedef struct {
   pthread_mutex_t Mutex;  // Mutex for each ConlesEventSuber
   pthread_cond_t Cond;    // Cond for each ConlesEventSuber
 
+  bool ShouldExitASyncThread;  //
+
   IOC_EvtSubArgs_T Args;  // saved from subEVT(pEvtSubArgs)
 
   pthread_t ASyncThreadID;  // If ASyncMode, each EvtSuber will start a ASyncThread to process the event
@@ -65,6 +67,16 @@ static _IOC_ConlesEventContext_T _mConlesEvtCtx = {
     .pEvtSubers = NULL,
     .IsSyncMode = false,
 };
+
+static void __IOC_ConlesEvent_stopASyncThread(_IOC_ConlesEventSuber_pT pEvtSuber) {
+  pthread_mutex_lock(&pEvtSuber->Mutex);
+  pEvtSuber->ShouldExitASyncThread = true;
+  pthread_mutex_unlock(&pEvtSuber->Mutex);
+
+  pthread_cond_signal(&pEvtSuber->Cond);
+  pthread_join(pEvtSuber->ASyncThreadID, NULL);
+  pEvtSuber->ASyncThreadID = 0;
+}
 
 static TOS_Result_T __IOC_ConlesMode_subEVT(const IOC_EvtSubArgs_pT pEvtSubArgs) {
   int RetPSX = pthread_mutex_lock(&_mConlesEvtCtx.Mutex);
@@ -154,10 +166,7 @@ static TOS_Result_T __IOC_ConlesMode_unsubEVT(const IOC_EvtUnsubArgs_pT pEvtUnsu
     for (ULONG_T Idx = 0; Idx < _mConlesEvtCtx.MaxSuberNum; Idx++) {
       _IOC_ConlesEventSuber_pT pEvtSuber = &_mConlesEvtCtx.pEvtSubers[Idx];
       if (pEvtSuber->ASyncThreadID) {
-        pthread_cancel(pEvtSuber->ASyncThreadID);
-        pthread_cond_signal(&pEvtSuber->Cond);
-        pthread_join(pEvtSuber->ASyncThreadID, NULL);
-        pEvtSuber->ASyncThreadID = 0;
+        __IOC_ConlesEvent_stopASyncThread(pEvtSuber);
       }
 
       IOC_EvtSubArgs_pT pSavdSubArgs = &pEvtSuber->Args;
@@ -177,10 +186,7 @@ static TOS_Result_T __IOC_ConlesMode_unsubEVT(const IOC_EvtUnsubArgs_pT pEvtUnsu
       IOC_EvtSubArgs_pT pSavdSubArgs = &pEvtSuber->Args;
       if (pSavdSubArgs->CbProcEvt_F == pEvtUnsubArgs->CbProcEvt_F && pSavdSubArgs->pCbPriv == pEvtUnsubArgs->pCbPriv) {
         if (pEvtSuber->ASyncThreadID) {
-          pthread_cancel(pEvtSuber->ASyncThreadID);
-          pthread_cond_signal(&pEvtSuber->Cond);
-          pthread_join(pEvtSuber->ASyncThreadID, NULL);
-          pEvtSuber->ASyncThreadID = 0;
+          __IOC_ConlesEvent_stopASyncThread(pEvtSuber);
         }
 
         free(pSavdSubArgs->pEvtIDs);
@@ -244,9 +250,22 @@ static void *__IOC_ConlesMode_ASyncEventThread(void *pArg) {
   // Follow comments in _IOC_ConlesEventSuber_T
   while (1) {
     pthread_mutex_lock(&pEvtSuber->Mutex);
+    if (pEvtSuber->ShouldExitASyncThread) {
+      pthread_mutex_unlock(&pEvtSuber->Mutex);
+      break;
+    }
+
     while (pEvtSuber->EvtPostCnt == pEvtSuber->EvtProcCnt) {
       pthread_cond_wait(&pEvtSuber->Cond, &pEvtSuber->Mutex);
-      pthread_testcancel();
+
+      if (pEvtSuber->ShouldExitASyncThread) {
+        break;
+      }
+    }
+
+    if (pEvtSuber->ShouldExitASyncThread) {
+      pthread_mutex_unlock(&pEvtSuber->Mutex);
+      break;
     }
 
     IOC_EvtDesc_pT pEvtDesc = &pEvtSuber->EvtDescQueue[pEvtSuber->EvtProcCnt % _IOC_CONLES_EVTQUEUE_MAX];
