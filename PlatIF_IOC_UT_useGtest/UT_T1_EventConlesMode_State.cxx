@@ -17,21 +17,23 @@
 // RefCode: TEST(EventConlesModeTypical, Case01) in UT_T1_EventConlesMode_Typical.cxx
 typedef struct {
   ULONG_T MagicValue;
+  sem_t* pSemSyncEnterCbProcEvt;
 } _UT_Case01_CbPrivObjA_T, *_UT_Case01_CbPrivObjA_pT;
 
 static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pCbPriv) {
   _UT_Case01_CbPrivObjA_pT pCbPrivObjA = (_UT_Case01_CbPrivObjA_pT)pCbPriv;
+
+  sem_post(pCbPrivObjA->pSemSyncEnterCbProcEvt);
   sleep(3);
   pCbPrivObjA->MagicValue = 0x87654321;
   return TOS_RESULT_SUCCESS;
 }
 
-TEST(ConlesModeState, Case01) {
-  IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
-
+TEST(UT_ConlesEventState, Case01) {
   // Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private magic value X
   _UT_Case01_CbPrivObjA_T CbPrivObjA = {0};
   CbPrivObjA.MagicValue = 0x12345678;
+  CbPrivObjA.pSemSyncEnterCbProcEvt = sem_open("/UT_Case01_SemSyncEnterCbProcEvt", O_CREAT, 0644, 0);
 
   IOC_EvtID_T EvtIDsObjA[] = {IOC_EVTID_TEST_KEEPALIVE};
   IOC_EvtSubArgs_T EvtSubArgsObjA = {
@@ -40,21 +42,26 @@ TEST(ConlesModeState, Case01) {
       .EvtNum = TOS_calcArrayElmtCnt(EvtIDsObjA),
       .pEvtIDs = EvtIDsObjA,
   };
-  TOS_Result_T Result = PLT_IOC_subEVT(LinkID, &EvtSubArgsObjA);
+  TOS_Result_T Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
   // Step-2: ObjB as EvtPuber postEvt(TEST_KEEPALIVE)
   IOC_EvtDesc_T EvtDescObjB = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
-  Result = PLT_IOC_postEVT(LinkID, &EvtDescObjB, NULL);
+  Result = PLT_IOC_postEVT_inConlesMode(&EvtDescObjB, NULL);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
+
+  sem_wait(CbPrivObjA.pSemSyncEnterCbProcEvt);  // Wait ObjA's CbProcEvt_F() enter
 
   // Step-3: ObjA unsubEvt(TEST_KEEPALIVE)
   IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {.CbProcEvt_F = _UT_Case01_CbProcEvtObjA_F, .pCbPriv = &CbPrivObjA};
-  Result = PLT_IOC_unsubEVT(LinkID, &EvtUnsubArgsObjA);
+  Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
   // Check ObjA's private magic value is Y now
   ASSERT_EQ(CbPrivObjA.MagicValue, 0x87654321);  // CheckPoint
+
+  //===CLEANUP===
+  sem_close(CbPrivObjA.pSemSyncEnterCbProcEvt);
 }
 
 //===> Case[02]: Same as Case[01], but ObjB postEvt in a thread context
@@ -94,7 +101,7 @@ static void* _UT_Case02_ThreadObjB(void* pArg) {
   return NULL;
 }
 
-TEST(ConlesModeState, Case02) {
+TEST(UT_ConlesEventState, Case02) {
   IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
 
   // Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private magic value X
@@ -191,7 +198,7 @@ static void* _UT_Case03_ThreadObjX(void* pArg) {
   return NULL;
 }
 
-TEST(ConlesModeState, Case03) {
+TEST(UT_ConlesEventState, Case03) {
   IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
 
   // Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private magic value X

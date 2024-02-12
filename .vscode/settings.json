@@ -10,6 +10,9 @@
         "stopAtEntry": true,
     },
 
+    "cmake.testEnvironment": {
+        "ASAN_OPTIONS": "abort_on_error=1",
+    },
     "cmake.defaultVariants": {
         "buildType": {
             "default": "debug",

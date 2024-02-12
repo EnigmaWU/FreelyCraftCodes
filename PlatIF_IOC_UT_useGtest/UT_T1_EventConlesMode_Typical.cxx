@@ -43,6 +43,8 @@ TEST(EventConlesModeTypical, Case01) {
     ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
   }
 
+  usleep(10000);  // 10ms, hard code to wait for all the events to be processed
+
   //===>Step3: EvtSuber's EvtArgs::CbProcEvt_F is called $$_UT_EVTCNT_KEEPALIVE times
   ASSERT_EQ(_UT_EVTCNT_KEEPALIVE, EvtSuberPriv.KeepAliveEvtCnt);  //@CheckPoint
 
@@ -133,7 +135,7 @@ static TOS_Result_T _UT_Case02_CbProcEvtObjC_F(IOC_EvtDesc_pT pEvtDesc, void *pC
 
       //===>Step2: ObjC as EvtPuber postEVT(EvtID==TEST_MOVE_VERTICAL_ACK) in each CbProcEvt_F callbacked
       IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_MOVE_VERTICAL_ACK};
-      TOS_Result_T Result = PLT_IOC_postEVT(IOC_CONLESMODE_AUTO_LINK_ID, &EvtDesc, NULL);
+      TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
       EXPECT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
     } break;
 
@@ -142,7 +144,7 @@ static TOS_Result_T _UT_Case02_CbProcEvtObjC_F(IOC_EvtDesc_pT pEvtDesc, void *pC
 
       //===>Step2: ObjC as EvtPuber postEVT(EvtID==TEST_COLLISION_DETECTED_ACK) in each CbProcEvt_F callbacked
       IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_COLLISION_DETECTED_ACK};
-      TOS_Result_T Result = PLT_IOC_postEVT(IOC_CONLESMODE_AUTO_LINK_ID, &EvtDesc, NULL);
+      TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
       EXPECT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
     } break;
 
@@ -186,8 +188,6 @@ static TOS_Result_T _UT_Case02_CbProcEvtObjD_F(IOC_EvtDesc_pT pEvtDesc, void *pC
 
 // implement TEST(ConlesModeTypical, Case02) based on the above description and use TEST(ConlesModeTypical, Case01) as sample
 TEST(EventConlesModeTypical, Case02) {
-  IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
-
   //===>Step1: ObjA as EvtSuber subEvt(EvtID==TEST_KEEPALIVE/MOVE_VERTICAL_ACK/MOVE_HORIZONTAL_ACK/COLLISION_DETECTED_ACK)
   _UT_Case02_CbPrivObjA_T CbPrivObjA = {
       .KeepAliveEvtCnt = 0, .MoveVerticalAckEvtCnt = 0, .MoveHorizontalAckEvtCnt = 0, .CollisionDetectedAckEvtCnt = 0};
@@ -197,7 +197,7 @@ TEST(EventConlesModeTypical, Case02) {
                                      .pCbPriv = &CbPrivObjA,
                                      .EvtNum = TOS_calcArrayElmtCnt(SubEvtIDsObjA),
                                      .pEvtIDs = SubEvtIDsObjA};
-  TOS_Result_T Result = PLT_IOC_subEVT(LinkID, &EvtSubArgsObjA);
+  TOS_Result_T Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjA);
   ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
 
   //===>Step2.1: ObjC as EvtSuber subEvt(EvtID==TEST_MOVE_VERTICAL/COILLISION_DETECTED) with
@@ -209,7 +209,7 @@ TEST(EventConlesModeTypical, Case02) {
                                      .pCbPriv = &CbPrivObjC,
                                      .EvtNum = TOS_calcArrayElmtCnt(SubEvtIDsObjC),
                                      .pEvtIDs = SubEvtIDsObjC};
-  Result = PLT_IOC_subEVT(LinkID, &EvtSubArgsObjC);
+  Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjC);
   ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
 
   //===>Step2.1: ObjC start a thread named "ObjC_Thread" as EvtPuber postEvt(EvtID==TEST_KEEPALIVE) every 1ms*$_UT_EVTCNT_KEEPALIVE
@@ -231,14 +231,14 @@ TEST(EventConlesModeTypical, Case02) {
                                      .pCbPriv = &CbPrivObjD,
                                      .EvtNum = TOS_calcArrayElmtCnt(SubEvtIDsObjD),
                                      .pEvtIDs = SubEvtIDsObjD};
-  Result = PLT_IOC_subEVT(LinkID, &EvtSubArgsObjD);
+  Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjD);
   ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
 
   //===>Step3.1: ObjD start a thread named "ObjD_Thread" as EvtPuber postEvt(EvtID==TEST_KEEPALIVE) every 1ms*$_UT_EVTCNT_KEEPALIVE
   std::thread ObjD_Thread([]() {
     for (int i = 0; i < _UT_EVTCNT_KEEPALIVE; i++) {
       IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
-      TOS_Result_T Result = PLT_IOC_postEVT(IOC_CONLESMODE_AUTO_LINK_ID, &EvtDesc, NULL);
+      TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
       EXPECT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -249,7 +249,7 @@ TEST(EventConlesModeTypical, Case02) {
   std::thread ObjB_Thread1([]() {
     for (int i = 0; i < _UT_EVTCNT_MOVE_VERTICAL; i++) {
       IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_MOVE_VERTICAL};
-      TOS_Result_T Result = PLT_IOC_postEVT(IOC_CONLESMODE_AUTO_LINK_ID, &EvtDesc, NULL);
+      TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
       EXPECT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -260,7 +260,7 @@ TEST(EventConlesModeTypical, Case02) {
   std::thread ObjB_Thread2([]() {
     for (int i = 0; i < _UT_EVTCNT_MOVE_HORIZONTAL; i++) {
       IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_MOVE_HORIZONTAL};
-      TOS_Result_T Result = PLT_IOC_postEVT(IOC_CONLESMODE_AUTO_LINK_ID, &EvtDesc, NULL);
+      TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
       EXPECT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -270,7 +270,7 @@ TEST(EventConlesModeTypical, Case02) {
   std::thread ObjB_Thread3([]() {
     for (int i = 0; i < _UT_EVTCNT_KEEPALIVE; i++) {
       IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
-      TOS_Result_T Result = PLT_IOC_postEVT(IOC_CONLESMODE_AUTO_LINK_ID, &EvtDesc, NULL);
+      TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
       EXPECT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -281,7 +281,7 @@ TEST(EventConlesModeTypical, Case02) {
   std::thread ObjE_Thread1([]() {
     for (int i = 0; i < _UT_EVTCNT_COLLISION_DETECTED; i++) {
       IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_COLLISION_DETECTED};
-      TOS_Result_T Result = PLT_IOC_postEVT(IOC_CONLESMODE_AUTO_LINK_ID, &EvtDesc, NULL);
+      TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
       EXPECT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
       std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
@@ -291,7 +291,7 @@ TEST(EventConlesModeTypical, Case02) {
   std::thread ObjE_Thread2([]() {
     for (int i = 0; i < _UT_EVTCNT_KEEPALIVE; i++) {
       IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
-      TOS_Result_T Result = PLT_IOC_postEVT(IOC_CONLESMODE_AUTO_LINK_ID, &EvtDesc, NULL);
+      TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
       EXPECT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -320,4 +320,107 @@ TEST(EventConlesModeTypical, Case02) {
   //===>Step8: ObjD check MoveHorizontalEvtCnt, CollisionDetectedEvtCnt
   ASSERT_EQ(_UT_EVTCNT_MOVE_HORIZONTAL, CbPrivObjD.MoveHorizontalEvtCnt);        //@CheckPoint
   ASSERT_EQ(_UT_EVTCNT_COLLISION_DETECTED, CbPrivObjD.CollisionDetectedEvtCnt);  //@CheckPoint
+
+  //===CLEANUP===
+  //===>Step9: ObjA/C/D unsubEvt
+  IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {.CbProcEvt_F = _UT_Case02_CbProcEvtObjA_F, .pCbPriv = &CbPrivObjA};
+  Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjA);
+  ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
+
+  IOC_EvtUnsubArgs_T EvtUnsubArgsObjC = {.CbProcEvt_F = _UT_Case02_CbProcEvtObjC_F, .pCbPriv = &CbPrivObjC};
+  Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjC);
+  ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
+
+  IOC_EvtUnsubArgs_T EvtUnsubArgsObjD = {.CbProcEvt_F = _UT_Case02_CbProcEvtObjD_F, .pCbPriv = &CbPrivObjD};
+  Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjD);
+  ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//===>Case[03]: ObjA/B as EvtSuber subEVT(TEST_KEEPALIVE), ObjC EvtPuber postEVT(TEST_KEEPALIVE)
+//  ObjA/B subEVT, ObjC postEVT($_UT_CASE03_EVTCNT_R1)
+//  ObjA unsubEvt, ObjC postEVT($_UT_CASE03_EVTCNT_R2)
+//  ObjB unsubEvt, ObjC postEVT($_UT_CASE03_EVTCNT_R3)
+//  Expect:
+//    ObjA's CbProcEvtObjA_F is callbacked $_UT_CASE03_EVTCNT_R1 times
+//    ObjB's CbProcEvtObjB_F is callbacked $_UT_CASE03_EVTCNT_R1 + $_UT_CASE03_EVTCNT_R2 times
+
+#define _UT_CASE03_EVTCNT_R1 128
+#define _UT_CASE03_EVTCNT_R2 256
+#define _UT_CASE03_EVTCNT_R3 512
+
+typedef struct {
+  ULONG_T KeepAliveEvtCnt;
+} _UT_Case03_CbPrivObjA_T, *_UT_Case03_CbPrivObjA_pT;
+
+static TOS_Result_T _UT_Case03_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void *pCbPriv) {
+  _UT_Case03_CbPrivObjA_pT pPrivObjA = (_UT_Case03_CbPrivObjA_pT)pCbPriv;
+  pPrivObjA->KeepAliveEvtCnt++;
+  return TOS_RESULT_SUCCESS;
+}
+
+typedef struct {
+  ULONG_T KeepAliveEvtCnt;
+} _UT_Case03_CbPrivObjB_T, *_UT_Case03_CbPrivObjB_pT;
+
+static TOS_Result_T _UT_Case03_CbProcEvtObjB_F(IOC_EvtDesc_pT pEvtDesc, void *pCbPriv) {
+  _UT_Case03_CbPrivObjB_pT pPrivObjB = (_UT_Case03_CbPrivObjB_pT)pCbPriv;
+  pPrivObjB->KeepAliveEvtCnt++;
+  return TOS_RESULT_SUCCESS;
+}
+
+TEST(EventConlesModeTypical, Case03) {
+  //===>Step1: ObjA/B as EvtSuber subEVT(TEST_KEEPALIVE), ObjC EvtPuber postEVT(TEST_KEEPALIVE)
+  _UT_Case03_CbPrivObjA_T CbPrivObjA = {.KeepAliveEvtCnt = 0};
+  IOC_EvtID_T SubEvtIDsObjA[] = {IOC_EVTID_TEST_KEEPALIVE};
+  IOC_EvtSubArgs_T EvtSubArgsObjA = {.CbProcEvt_F = _UT_Case03_CbProcEvtObjA_F,
+                                     .pCbPriv = &CbPrivObjA,
+                                     .EvtNum = TOS_calcArrayElmtCnt(SubEvtIDsObjA),
+                                     .pEvtIDs = SubEvtIDsObjA};
+  TOS_Result_T Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjA);
+  ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
+
+  _UT_Case03_CbPrivObjB_T CbPrivObjB = {.KeepAliveEvtCnt = 0};
+  IOC_EvtID_T SubEvtIDsObjB[] = {IOC_EVTID_TEST_KEEPALIVE};
+  IOC_EvtSubArgs_T EvtSubArgsObjB = {.CbProcEvt_F = _UT_Case03_CbProcEvtObjB_F,
+                                     .pCbPriv = &CbPrivObjB,
+                                     .EvtNum = TOS_calcArrayElmtCnt(SubEvtIDsObjB),
+                                     .pEvtIDs = SubEvtIDsObjB};
+  Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjB);
+  ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
+
+  //===>Step2: ObjC postEVT($_UT_CASE03_EVTCNT_R1)
+  for (int i = 0; i < _UT_CASE03_EVTCNT_R1; i++) {
+    IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
+    Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
+    ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
+  }
+
+  //===>Step3: ObjA unsubEvt, ObjC postEVT($_UT_CASE03_EVTCNT_R2)
+  IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {.CbProcEvt_F = _UT_Case03_CbProcEvtObjA_F, .pCbPriv = &CbPrivObjA};
+  Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjA);
+  ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
+
+  for (int i = 0; i < _UT_CASE03_EVTCNT_R2; i++) {
+    IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
+    Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
+    ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
+  }
+
+  //===>Step4: ObjB unsubEvt, ObjC postEVT($_UT_CASE03_EVTCNT_R3)
+  IOC_EvtUnsubArgs_T EvtUnsubArgsObjB = {.CbProcEvt_F = _UT_Case03_CbProcEvtObjB_F, .pCbPriv = &CbPrivObjB};
+  Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjB);
+  ASSERT_EQ(TOS_RESULT_SUCCESS, Result);  //@CheckPoint
+
+  for (int i = 0; i < _UT_CASE03_EVTCNT_R3; i++) {
+    IOC_EvtDesc_T EvtDesc = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
+    Result = PLT_IOC_postEVT_inConlesMode(&EvtDesc, NULL);
+    ASSERT_EQ(TOS_RESULT_NO_EVT_SUBER, Result);  //@CheckPoint
+  }
+
+  //===VERIFY===
+  //===>Step5: Expect: ObjA's CbProcEvtObjA_F is callbacked $_UT_CASE03_EVTCNT_R1 times
+  ASSERT_EQ(_UT_CASE03_EVTCNT_R1, CbPrivObjA.KeepAliveEvtCnt);  //@CheckPoint
+  //===>Step6: Expect: ObjB's CbProcEvtObjB_F is callbacked $_UT_CASE03_EVTCNT_R1 + $_UT_CASE03_EVTCNT_R2 times
+  ASSERT_EQ(_UT_CASE03_EVTCNT_R1 + _UT_CASE03_EVTCNT_R2, CbPrivObjB.KeepAliveEvtCnt);  //@CheckPoint
 }
