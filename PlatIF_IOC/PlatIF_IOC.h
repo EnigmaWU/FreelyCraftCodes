@@ -169,18 +169,18 @@ typedef enum
 
 /**
  * @brief FSM of Link in IOC from User such as ObjXYZ's view
- * TODO(@W): @ConetMode_of[CMD,EVT,DAT]:
+ * TODO(@W): @FSM_ofConet[CMD,EVT,DAT]:
  *
  * --------------------------------------------------------------------------------------------------------------------
- * @ConlesMode_of[EVT]:
- *      <ACT:_initCRuntimeSuccess>  -> [STATE:LinkStateReady]
+ * @FSM_ofConlesEVT:
+ *      {TSF-0}<ACT:_initCRuntimeSuccess>  -> [STATE:LinkStateReady]
  *
- *      [STATE:LinkStateReady]  ->  <ACT:subEvt/unsubEvt>   -> [STATE:LinkStateReady]
+ *      {TSF-1}[STATE:LinkStateReady]  ->  <ACT:subEvt/unsubEvt>   -> [STATE:LinkStateReady]
  *
- *      [STATE:LinkStateReady]  ->  <ACT:postEvt>
- *          |-> <EVT:enterCbProcEvt_F>  ->  [STATE:LinkStateBusy]
- *      [STATE:LinkStateBusy]
- *          |-> <EVT:leaveCbProcEvt_F>  ->  [STATE:LinkStateReady]
+ *      {TSF-2}[STATE:LinkStateReady]  ->  <ACT:postEvt>
+ *                 |-> <EVT:enterCbProcEvt_F>  ->  [STATE:LinkStateBusy]
+ *      {TSF-3}[STATE:LinkStateBusy]
+ *                 |-> <EVT:leaveCbProcEvt_F>  ->  [STATE:LinkStateReady]
  */
 typedef enum 
 {

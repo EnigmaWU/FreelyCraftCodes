@@ -120,16 +120,9 @@ static TOS_Result_T __IOC_ConlesMode_subEVT(const IOC_EvtSubArgs_pT pEvtSubArgs)
   }
 
   _IOC_ConlesEventSuber_pT pEvtSuber = &_mConlesEvtCtx.pEvtSubers[FreeSuberIdx];
-  pEvtSuber->ASyncThreadID = 0;
-  // pthread_mutexattr_t AttrRecsiv;
-  // pthread_mutexattr_init(&AttrRecsiv);
-  // pthread_mutexattr_settype(&AttrRecsiv, PTHREAD_MUTEX_RECURSIVE);
-  // pthread_mutex_init(&pEvtSuber->Mutex, &AttrRecsiv);
-  // pthread_mutexattr_destroy(&AttrRecsiv);
+  memset(pEvtSuber, 0, sizeof(_IOC_ConlesEventSuber_T));
   pthread_mutex_init(&pEvtSuber->Mutex, NULL);
   pthread_cond_init(&pEvtSuber->Cond, NULL);
-  pEvtSuber->EvtPostCnt = 0;
-  pEvtSuber->EvtProcCnt = 0;
 
   IOC_EvtSubArgs_pT pSavdSubArgs = &pEvtSuber->Args;
   size_t SavdEvtIDSiz = sizeof(IOC_EvtID_T) * pEvtSubArgs->EvtNum;
@@ -440,7 +433,7 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
           if (pEvtSuber->EvtPostCnt - pEvtSuber->EvtProcCnt < _IOC_CONLES_EVTQUEUE_MAX) {
             pEvtSuber->EvtDescQueue[pEvtSuber->EvtPostCnt % _IOC_CONLES_EVTQUEUE_MAX] = *pEvtDesc;
             pEvtSuber->EvtPostCnt++;
-            pthread_cond_signal(&pEvtSuber->Cond);
+            // pthread_cond_signal(&pEvtSuber->Cond);
             Result = TOS_RESULT_SUCCESS;
           } else {
             if (IsNonBlock) {
@@ -461,6 +454,11 @@ static TOS_Result_T __IOC_ConlesMode_postEVT(const IOC_EvtDesc_pT pEvtDesc, cons
           }
 
           pthread_mutex_unlock(&pEvtSuber->Mutex);
+
+          if (Result == TOS_RESULT_SUCCESS) {
+            pthread_cond_signal(&pEvtSuber->Cond);
+          }
+
           break;
         } while (0x20240211);
       }

@@ -1,20 +1,22 @@
 // This is a common header file for all UTs of PlatIF_IOC from API user's perspective,
 //   which means the UTs focus on IOC's behavior in user view but its internal implementation.
-// We design UT from following aspects/cagegory:
-//   FreeDrafts, Typical, Demo, Boundary, State, Performance, Concurrency, Robust, Fault, Misuse, Others.
+// We design UT from following aspects/category:
+//   FreelyDrafts, Typical, Demo, Boundary, State, Performance, Concurrency, Robust, Fault, Misuse, Others.
 //      align to IMPROVE VALUE、AVOID LOST、BALANCE SKILL vs COST.
 
-//[FreeDrafts]: 
+//[FreelyDrafts]: Any natural or intuitive idea, first write down here freely,
+//  then refine it to a category from one main aspect.
 //[Typical]:
 //[Demo]:
 //[Boundary]:
-//[State]:
+//[State]: Verify FSM of IOC's Objects, such as FSM_ofConlesEVT.
 //[Performance]:
 //[Concurrency]:
 //[Robust]: Repeatly reach IOC's max capacity, check IOC's behavior still correct.
 //[Fault]:
 //[Misuse]:
 //[Others]:
+//===>RefMore: TEMPLATE OF UT CASE in UT_FreelyDrafts.cxx
 
 //---------------------------------------------------------------------------------------------------------------------
 // Use GoogleTest as unit test framework

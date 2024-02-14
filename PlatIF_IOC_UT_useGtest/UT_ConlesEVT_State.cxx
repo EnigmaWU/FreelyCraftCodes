@@ -6,18 +6,22 @@
 #include "_UT_IOC_Common.h"
 
 // This is IOC_Event in ConlesMode's State/FSM UT from API user's perspective
-// RefMore: FSM definition of ConlesMode_of[EVT] in PlatIF_IOC.h
+// RefMore: FSM definition of FSM_ofConlesEVT in PlatIF_IOC.h
 
-//===> Case[01]: ObjA as EvtPuber postEvt, ObjB as EvtSuber subEvt,
-//      ObjB can't unsubEvt if CbProcEvt_F is callbacking by ObjA's event.
-//  Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private magic value X
-//  Step-2: ObjB as EvtPuber postEvt(TEST_KEEPALIVE)
-//            |-> In ObjA's CbProcEvt_F(), sleep(3), set ObjA's private magic value Y
-//  Step-3: ObjA unsubEvt(TEST_KEEPALIVE)
-//            |-> ObjA will be blocked in unsubEvt() until ObjA's CbProcEvt_F() return,
-//              and check ObjA's private magic value is Y now
-
-// RefCode: TEST(EventConlesModeTypical, Case01) in UT_T1_EventConlesMode_Typical.cxx
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * @[Name]: verifyUnsubEvtInLinkReadyState_byCbProcEvtSleep3sToForceInLinkBusyState
+ * @[Purpose]: verify FSM_ofConlesEVT's {TSF-1}[STATE:LinkStateReady] -> <ACT:unsubEvt> -> [STATE:LinkStateReady].
+ * @[Steps]:
+ *   1. ObjA as EvtSuber subEVT(TEST_KEEPALIVE), set ObjA's private magic value '1'
+ *   2. ObjB as EvtPuber postEVT(TEST_KEEPALIVE)
+ *         |-> In ObjA's CbProcEvt_F(), sleep(3), set ObjA's private magic value '3'
+ *   3. ObjA unsubEvt(TEST_KEEPALIVE)
+ *         |-> ObjA will be blocked in unsubEvt() until ObjA's CbProcEvt_F() return,
+ * @[Expect]: ObjA unsubEVT SUCCESS, and ObjA's private magic value is '3' after unsubEVT.
+ * @[Notes]:
+ *    RefCode: TEST(UT_ConlesEventTypical, Case01) in UT_ConlesEvent_Typical.cxx
+ */
 typedef struct {
   ULONG_T MagicValue;
   pthread_mutex_t Mutex;
@@ -35,10 +39,9 @@ static TOS_Result_T _UT_Case01_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pC
   return TOS_RESULT_SUCCESS;
 }
 
-TEST(UT_ConlesEventState, Case01) {
-  // Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private magic value X
-  _UT_Case01_CbPrivObjA_T CbPrivObjA = {0};
-  CbPrivObjA.MagicValue = 1;
+TEST(UT_ConlesEventState, Case01_verifyUnsubEvtInLinkReadyState_byCbProcEvtSleep3sToForceInLinkBusyState) {
+  // Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private magic value 1
+  _UT_Case01_CbPrivObjA_T CbPrivObjA = {.MagicValue = 1};
   pthread_mutex_init(&CbPrivObjA.Mutex, NULL);
   pthread_cond_init(&CbPrivObjA.Cond, NULL);
 
@@ -63,10 +66,10 @@ TEST(UT_ConlesEventState, Case01) {
   // Step-3: ObjA unsubEvt(TEST_KEEPALIVE)
   IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {.CbProcEvt_F = _UT_Case01_CbProcEvtObjA_F, .pCbPriv = &CbPrivObjA};
   Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjA);
-  ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
-  // Check ObjA's private magic value is Y now
-  ASSERT_EQ(CbPrivObjA.MagicValue, 3);  // CheckPoint
+  //===VERIFY===
+  ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // KeyCheckPoint
+  ASSERT_EQ(CbPrivObjA.MagicValue, 3);    // KeyCheckPoint
 
   //===CLEANUP===
 }
@@ -79,9 +82,9 @@ TEST(UT_ConlesEventState, Case01) {
 //  Step-5: Check ObjA's private magic value is Z now
 
 typedef enum {
-  _UT_Case02_MagicValue_X = 0x12345678,
-  _UT_Case02_MagicValue_Y = 0x87654321,
-  _UT_Case02_MagicValue_Z = 0x13572468,
+  _UT_Case02_MagicValue_X = 1,
+  _UT_Case02_MagicValue_Y = 2,
+  _UT_Case02_MagicValue_Z = 3,
 } _UT_Case02_MagicValue_T;
 
 typedef struct {
@@ -97,20 +100,13 @@ static TOS_Result_T _UT_Case02_CbProcEvtObjA_F(IOC_EvtDesc_pT pEvtDesc, void* pC
 }
 
 static void* _UT_Case02_ThreadObjB(void* pArg) {
-  IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
   IOC_EvtDesc_T EvtDescObjB = {.EvtID = IOC_EVTID_TEST_KEEPALIVE};
 
-  while (1) {
-    PLT_IOC_postEVT(LinkID, &EvtDescObjB, NULL);
-    usleep(1);
-  }
-
+  PLT_IOC_postEVT_inConlesMode(&EvtDescObjB, NULL);
   return NULL;
 }
 
 TEST(UT_ConlesEventState, Case02) {
-  IOC_LinkID_T LinkID = IOC_CONLESMODE_AUTO_LINK_ID;
-
   // Step-1: ObjA as EvtSuber subEvt(TEST_KEEPALIVE), set ObjA's private magic value X
   _UT_Case02_CbPrivObjA_T CbPrivObjA = {};
   CbPrivObjA.MagicValue = _UT_Case02_MagicValue_X;
@@ -122,7 +118,7 @@ TEST(UT_ConlesEventState, Case02) {
       .EvtNum = TOS_calcArrayElmtCnt(EvtIDsObjA),
       .pEvtIDs = EvtIDsObjA,
   };
-  TOS_Result_T Result = PLT_IOC_subEVT(LinkID, &EvtSubArgsObjA);
+  TOS_Result_T Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
   // Step-2: Start Thread_ObjB to postEvt(TEST_KEEPALIVE)
@@ -137,14 +133,13 @@ TEST(UT_ConlesEventState, Case02) {
 
   // Step-4: ObjA unsubEvt(TEST_KEEPALIVE)
   IOC_EvtUnsubArgs_T EvtUnsubArgsObjA = {.CbProcEvt_F = _UT_Case02_CbProcEvtObjA_F, .pCbPriv = &CbPrivObjA};
-  Result = PLT_IOC_unsubEVT(LinkID, &EvtUnsubArgsObjA);
+  Result = PLT_IOC_unsubEVT_inConlesMode(&EvtUnsubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
   // Step-5: Check ObjA's private magic value is Y now
   ASSERT_EQ(CbPrivObjA.MagicValue, _UT_Case02_MagicValue_Z);  // CheckPoint
 
   // TEARDOWN: Cancel&Wait Thread_ObjB exit
-  pthread_cancel(Thread_ObjB);
   pthread_join(Thread_ObjB, NULL);
 }
 
