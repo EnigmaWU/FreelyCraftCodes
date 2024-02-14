@@ -243,7 +243,7 @@ static void *__IOC_ConlesMode_ASyncEventThread(void *pArg) {
   // Follow comments in _IOC_ConlesEventSuber_T
   while (1) {
     pthread_mutex_lock(&pEvtSuber->Mutex);
-    if (pEvtSuber->ShouldExitASyncThread) {
+    if (pEvtSuber->ShouldExitASyncThread && (pEvtSuber->EvtPostCnt == pEvtSuber->EvtProcCnt)) {
       pthread_mutex_unlock(&pEvtSuber->Mutex);
       break;
     }
@@ -251,12 +251,12 @@ static void *__IOC_ConlesMode_ASyncEventThread(void *pArg) {
     while (pEvtSuber->EvtPostCnt == pEvtSuber->EvtProcCnt) {
       pthread_cond_wait(&pEvtSuber->Cond, &pEvtSuber->Mutex);
 
-      if (pEvtSuber->ShouldExitASyncThread) {
+      if (pEvtSuber->ShouldExitASyncThread && (pEvtSuber->EvtPostCnt == pEvtSuber->EvtProcCnt)) {
         break;
       }
     }
 
-    if (pEvtSuber->ShouldExitASyncThread) {
+    if (pEvtSuber->ShouldExitASyncThread && (pEvtSuber->EvtPostCnt == pEvtSuber->EvtProcCnt)) {
       pthread_mutex_unlock(&pEvtSuber->Mutex);
       break;
     }

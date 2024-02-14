@@ -31,6 +31,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include <cstddef>
+#include <thread>
+
 #include "../PlatIF_IOC/PlatIF_IOC.h"
 
 #ifndef __UT_IOC_COMMON_H__
