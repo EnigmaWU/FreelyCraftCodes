@@ -14,7 +14,7 @@ TEST(UT_NameOfCategory, CaseNN_verifyBehivorX_byDoABC) {
   //===SETUP===
   // 1. ...
 
-  //===EXECUTE===
+  //===BEHAVIOR===
   //@VerifyPoint xN(each case MAY have many 'ASSERT_XYZ' check points)
 
   //===VERIFY===

@@ -42,7 +42,7 @@ static void* _UT_Case01_ThreadObjX(void* pArg) {
     IOC_Options_T OptSync = {.IDs = IOC_OPTID_SYNC_MODE};
     struct timeval BeforePostTime, AfterPostTime;
 
-    //===EXECUTE===
+    //===BEHAVIOR===
     gettimeofday(&BeforePostTime, NULL);
     TOS_Result_T Result = PLT_IOC_postEVT_inConlesMode(&EvtDescObjX, &OptSync);
     gettimeofday(&AfterPostTime, NULL);
@@ -73,7 +73,7 @@ TEST(UT_ConlesModeEventPerf, Case01) {
   TOS_Result_T Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
-  //===EXECUTE===
+  //===BEHAVIOR===
   // Step-2: ObjB/C/D/E/F as EvtPuber postEvt(TEST_KEEPALIVE) in each's thread context
   pthread_t ThreadID[5];  // ObjX=ObjB/C/D/E/F
   for (int i = 0; i < TOS_calcArrayElmtCnt(ThreadID); i++) {

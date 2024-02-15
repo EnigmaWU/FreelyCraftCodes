@@ -105,7 +105,7 @@ TEST(UT_ConlesEventConcurrency, Case01) {
   TOS_Result_T Result = PLT_IOC_subEVT_inConlesMode(&EvtSubArgsObjA);
   ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
 
-  //===EXECUTE===
+  //===BEHAVIOR===
   // Step-2: ObjB/C as EvtPuber postEvt(TEST_BLOCK_SLEEP_5MS, TEST_NONBLOCK_SLEEP_1MS) in each's thread context
   pthread_t ThreadID[2];  // ObjB/C
   pthread_create(&ThreadID[0], NULL, _UT_Case01_ThreadObjB, NULL);
@@ -184,7 +184,7 @@ TEST(UT_ConlesEventConcurrency, Case02) {
     ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
   }
 
-  //===EXECUTE===
+  //===BEHAVIOR===
   // Step-2: ObjZ as EvtPuber postEvt(TEST_MAYBLOCK_SLEEP_1MS * $_UT_CASE02_MAYBLOCK_EVT_CNT)
   for (int i = 0; i < _UT_CASE02_MAYBLOCK_EVT_CNT; i++) {
     struct timeval BeforePostTime, AfterPostTime;
@@ -268,7 +268,7 @@ TEST(UT_ConlesEventConcurrency, Case03) {
     ASSERT_EQ(Result, TOS_RESULT_SUCCESS);  // CheckPoint
   }
 
-  //===EXECUTE===
+  //===BEHAVIOR===
   ULONG_T PostEvtGetTimeoutRstCnt = 0;
   // Step-2: ObjZ as EvtPuber postEvt(TEST_NONBLOCK_SLEEP_5MS * $_UT_CASE03_NONBLOCK_EVT_CNT)
   for (int i = 0; i < _UT_CASE03_NONBLOCK_EVT_CNT; i++) {
