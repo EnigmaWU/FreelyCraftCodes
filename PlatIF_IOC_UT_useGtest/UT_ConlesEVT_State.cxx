@@ -75,9 +75,9 @@ TEST(UT_ConlesEventState, Case01_verifyUnsubEvtInLinkReadyState_byCbProcEvtSleep
  * @[Purpose]: same with Case[01], plus EvtSuber will dynamiclly Sub/UnSubEvt multiply times .
  * @[Steps]:
  *   1. Start Thread_ObjA to dynamiclly Sub/UnSubEvt(TEST_KEEPALIVE) $_UT_CASE02_DYNAMIC_SUBUNSUB_CNT times
- *       |-> Each Sub/UnSubEvt will success, and usleep(1000/1ms)
- *       |-> In ObjA's CbProcEvt_F(), usleep(1000/1ms), save $ProcKeepAliveEvtCnt in CbPrivObjA
- *   2. Start Thread_ObjB to postEvt(TEST_KEEPALIVE * $_UT_CASE02_KEEPALIVE_EVT_CNT) every 100us
+ *       |-> Each Sub/UnSubEvt will success, and usleep(100)
+ *       |-> In ObjA's CbProcEvt_F(), usleep(100), save $ProcKeepAliveEvtCnt in CbPrivObjA
+ *   2. Start Thread_ObjB to postEvt(TEST_KEEPALIVE * $_UT_CASE02_KEEPALIVE_EVT_CNT) every 10us
  *       |-> save $PostEvtRetSuccessCnt and $PostEvtRetNoEvtSuberCnt in PrivObjB
  *   3. Wait Thread_ObjA/ObjB exit
  * @[Expect]: all Sub/UnSubEvt return RESULT_SUCCESS && $ProcKeepAliveEvtCnt == $PostEvtRetSuccessCnt
