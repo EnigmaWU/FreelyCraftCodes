@@ -177,7 +177,7 @@ typedef enum
  *
  *      {TSF-1}[STATE:LinkStateReady]  ->  <ACT:subEvt/unsubEvt>   -> [STATE:LinkStateReady]
  *
- *      {TSF-2}[STATE:LinkStateReady]  ->  <ACT:postEvt>
+ *      {TSF-2}[STATE:LinkStateReady]  ->  <ACT:postEvt>    -> [STATE:LinkStateReady]
  *                 |-> <EVT:enterCbProcEvt_F>  ->  [STATE:LinkStateBusy]
  *      {TSF-3}[STATE:LinkStateBusy]
  *                 |-> <EVT:leaveCbProcEvt_F>  ->  [STATE:LinkStateReady]
